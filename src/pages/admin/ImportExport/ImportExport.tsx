@@ -1,0 +1,211 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useRef, useState } from 'react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse } from 'lucide-react';
+import { toast } from 'sonner';
+
+const importOptions = [
+  { name: 'Sales', description: 'Import sales representatives', icon: Users },
+  { name: 'Customers', description: 'Import customer list with warehouse mapping', icon: Store },
+  { name: 'Warehouses', description: 'Import warehouse list', icon: Warehouse },
+  { name: 'Products', description: 'Import product catalog', icon: Package },
+];
+
+const exportOptions = [
+  { name: 'Sales', description: 'Export sales team data' },
+  { name: 'Customers', description: 'Export all customers with warehouse info' },
+  { name: 'Warehouses', description: 'Export all warehouses' },
+  { name: 'Products', description: 'Export product catalog' },
+];
+
+export default function ImportExport() {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedImportType, setSelectedImportType] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleImport = (name: string) => {
+    setSelectedImportType(name);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !selectedImportType) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('type', selectedImportType);
+
+    try {
+      setLoading(true);
+
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Unauthorized");
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_API}/uploads/import`, {
+        method: 'POST',
+        body: formData,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || 'Import failed');
+      }
+
+      const result = await res.json();
+
+      toast.success("Import completed successfully", {
+        description: `Inserted ${result?.data?.inserted ?? 0} of ${result?.data?.total ?? 0} records. Skipped ${result?.data?.failed ?? 0}. found ${result?.data?.existing ?? 0} already existing records`,
+      });
+
+    } catch (err: any) {
+      toast.error('Import failed', {
+        description: err.message,
+      });
+    } finally {
+      setLoading(false);
+      setSelectedImportType(null);
+      e.target.value = '';
+    }
+  };
+
+
+  const handleExport = (name: string) => {
+    const url = `${import.meta.env.VITE_BACKEND_API}/uploads/exports?type=${encodeURIComponent(name)}`;
+    window.open(url, "_blank");
+  };
+
+  const downloadCSV = (content: string, filename: string) => {
+    const blob = new Blob([content], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadTemplate = (name: string) => {
+    let headers = "";
+    let filename = "";
+
+    switch (name) {
+      case "Sales":
+        headers =
+          "email,password,role,name,phone_number,monthly_target,active\n";
+        filename = "sales_import_template.csv";
+        break;
+
+      case "Vendors":
+        headers =
+          "name,address,phone_number,warehouse_id,active\n";
+        filename = "vendors_import_template.csv";
+        break;
+
+      case "Warehouses":
+        headers =
+          "name,address,latitude,longitude,active\n";
+        filename = "warehouses_import_template.csv";
+        break;
+
+      case "Products":
+        headers =
+          "vendor_id,category_name,name,measure_unit,package_type,price,quantity_sold,sku,active,image\n";
+        filename = "products_import_template.csv";
+        break;
+
+      default:
+        toast.error("No template available for this type");
+        return;
+    }
+
+    downloadCSV(headers, filename);
+
+    toast.success("Template downloaded", {
+      description: `${name} import template (headers only)`,
+    });
+  };
+
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".csv,.xlsx,.xls"
+        className="hidden"
+        onChange={handleFileChange}
+      />
+
+      <div className="flex flex-col">
+        <h2 className="text-xl font-semibold">Import / Export</h2>
+        <p className="text-muted-foreground">Bulk data management via Excel/CSV</p>
+      </div>
+
+      <div className="grid gap-6 lg:grid-cols-2">
+        <Card>
+          <CardHeader className='flex items-start flex-col'>
+            <CardTitle>Import Data</CardTitle>
+            <CardDescription>Upload CSV / Excel files</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {importOptions.map(option => (
+              <div
+                key={option.name}
+                className="flex justify-between items-center border p-4 rounded-lg"
+              >
+                <div className="flex gap-3 items-center">
+                  <option.icon className="h-5 w-5" />
+                  <div className='flex items-start flex-col'>
+                    <p className="font-medium">{option.name}</p>
+                    <p className="text-sm text-muted-foreground">{option.description}</p>
+                  </div>
+                </div>
+                <div className="flex gap-2">
+                  <Button variant="outline" size="sm" onClick={() => handleDownloadTemplate(option.name)}>
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Template
+                  </Button>
+                  <Button size="sm" disabled={loading} onClick={() => handleImport(option.name)}>
+                    <Upload className="h-4 w-4" />
+                    Import
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className='flex items-start flex-col'>
+            <CardTitle>Export Data</CardTitle>
+            <CardDescription>Download reports</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {exportOptions.map(option => (
+              <div
+                key={option.name}
+                className="flex justify-between items-center border p-4 rounded-lg"
+              >
+                <div className='flex flex-col items-start'>
+                  <p className="font-medium">{option.name}</p>
+                  <p className="text-sm text-muted-foreground">{option.description}</p>
+                </div>
+                <Button variant="outline" size="sm" onClick={() => handleExport(option.name)}>
+                  <Download className="h-4 w-4" />
+                  Export
+                </Button>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

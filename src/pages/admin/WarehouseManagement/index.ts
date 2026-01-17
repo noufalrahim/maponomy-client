@@ -1,0 +1,1 @@
+export { default as WarehouseManagement } from './WarehouseManagement';
