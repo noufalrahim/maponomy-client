@@ -2,8 +2,12 @@
 import { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse, CalendarIcon } from 'lucide-react';
 import { toast } from 'sonner';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+import { Calendar } from '@/components/ui/calendar';
 
 const importOptions = [
   { name: 'Sales', description: 'Import sales representatives', icon: Users },
@@ -17,12 +21,17 @@ const exportOptions = [
   { name: 'Customers', description: 'Export all customers with warehouse info' },
   { name: 'Warehouses', description: 'Export all warehouses' },
   { name: 'Products', description: 'Export product catalog' },
+  { name: 'Orders', description: 'Export all orders' },
 ];
 
 export default function ImportExport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImportType, setSelectedImportType] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: new Date(),
+    to: new Date(),
+  });
 
   const handleImport = (name: string) => {
     setSelectedImportType(name);
@@ -77,10 +86,57 @@ export default function ImportExport() {
   };
 
 
-  const handleExport = (name: string) => {
-    const url = `${import.meta.env.VITE_BACKEND_API}/uploads/exports?type=${encodeURIComponent(name)}`;
-    window.open(url, "_blank");
+  const handleExport = async (name: string) => {
+    try {
+      const token = localStorage.getItem("token");
+
+      if (!token) {
+        throw new Error("Unauthorized");
+      }
+
+      const res = await fetch(
+        `${import.meta.env.VITE_BACKEND_API}/uploads/exports`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            type: name,
+            from: format(dateRange?.from ?? new Date(), "yyyy-MM-dd"),
+            to: format(dateRange?.to ?? new Date(), "yyyy-MM-dd"),
+          }),
+        }
+      );
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Export failed");
+      }
+
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${name.toLowerCase()}_export.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Export completed", {
+        description: `${name} data downloaded successfully`,
+      });
+    } catch (err: any) {
+      toast.error("Export failed", {
+        description: err.message,
+      });
+    }
   };
+
 
   const downloadCSV = (content: string, filename: string) => {
     const blob = new Blob([content], { type: 'text/csv' });
@@ -120,7 +176,11 @@ export default function ImportExport() {
           "vendor_id,category_name,name,measure_unit,package_type,price,quantity_sold,sku,active,image\n";
         filename = "products_import_template.csv";
         break;
-
+      case "Orders":
+        headers =
+          "id,vendor_id,vendor_name,warehouse_id,warehouse_name,delivery_date,delivery_start_time,delivery_end_time,status,total_amount,created_by,created_by_email,created_at,updated_at,pushed_to_erp\n";
+        filename = "orders_import_template.csv";
+        break;
       default:
         toast.error("No template available for this type");
         return;
@@ -183,9 +243,38 @@ export default function ImportExport() {
         </Card>
 
         <Card>
-          <CardHeader className='flex items-start flex-col'>
-            <CardTitle>Export Data</CardTitle>
-            <CardDescription>Download reports</CardDescription>
+          <CardHeader className='flex items-start flex-row justify-between'>
+            <div className='flex flex-col items-start'>
+              <CardTitle>Export Data</CardTitle>
+              <CardDescription>Download reports</CardDescription>
+            </div>
+            <div>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className="gap-2">
+                    <CalendarIcon className="h-4 w-4" />
+                    {dateRange?.from
+                      ? dateRange.to
+                        ? `${format(dateRange.from, "dd MMM")} – ${format(
+                          dateRange.to,
+                          "dd MMM"
+                        )}`
+                        : format(dateRange.from, "dd MMM")
+                      : "Date range (Created)"}
+
+                  </Button>
+                </PopoverTrigger>
+
+                <PopoverContent align="start" className="p-0">
+                  <Calendar
+                    mode="range"
+                    selected={dateRange}
+                    onSelect={setDateRange}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
           </CardHeader>
           <CardContent className="space-y-3">
             {exportOptions.map(option => (

@@ -40,6 +40,12 @@ export interface FormFieldSchema<T extends Record<string, any>> {
     };
   };
 
+  fileConstraint?: {
+  type: "image" | "pdf" | "custom"
+  accept?: string
+}
+
+
   constraint?: "emoji" | "lettersOnly" | "numericOnly" | "email";
 
   layout?: { colSpan?: number };

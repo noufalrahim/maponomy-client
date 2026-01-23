@@ -39,7 +39,7 @@ export default function CreateOrder() {
   const user = useSelector((state: RootState) => state?.user?.entity);
 
   const { data: vendors, isLoading: vendorsIsLoading } = useReadData<TServiceResponse<TCustomer[]>>('vendors_by_salesperson_list_fetch', `${CUSTOMER_END_POINT}/salesperson/${user?.salesperson?.id}`)
-  const { data: products, isLoading: productsIsLoading } = useReadData<TServiceResponse<TProduct[]>>('products_by_vendors_list_fetch', `${PRODUCT_END_POINT}/customer/${selectedVendorId}`)
+  const { data: products, isLoading: productsIsLoading } = useReadData<TServiceResponse<TProduct[]>>('products_list_fetch', `${PRODUCT_END_POINT}`)
 
   const { mutate, isPending } = useCreateData<CreateOrderDTO, TServiceResponse<TOrder>>(ORDER_END_POINT);
 

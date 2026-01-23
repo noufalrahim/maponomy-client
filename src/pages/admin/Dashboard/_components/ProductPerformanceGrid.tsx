@@ -48,8 +48,14 @@ export default function ProductPerformanceGrid() {
             {res.data.map(p => (
               <div key={p.id} className="rounded-lg border p-4">
                 <div className="flex flex-row gap-2 items-center justify-start pb-3">
-                  <span className="flex items-center justify-center w-10 h-10 rounded-md bg-accent text-accent-foreground">
-                    {p?.image}
+                   <span className="flex items-center justify-center w-14 h-14 rounded-md bg-accent text-accent-foreground">
+                    {
+                      p?.image && p?.image != "" ? (
+                        <img src={`${import.meta.env.VITE_STORAGE_API}/images/${p?.image}`} alt="" className="w-full h-full object-cover border border-gray-300 rounded-md" />
+                      ) : (
+                        <p className="font-bold">{withNA(p?.name?.charAt(0))}</p>
+                      )
+                    }
                   </span>
                   <div className="flex flex-col items-start">
                     <p className="font-semibold">{withNA(p?.name)}</p>

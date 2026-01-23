@@ -1,7 +1,6 @@
 export type ProductSchema = {
     name: string;
     categoryId: string;
-    vendorId: string;
     image: string;
     sku: string;
     measureUnit: string;

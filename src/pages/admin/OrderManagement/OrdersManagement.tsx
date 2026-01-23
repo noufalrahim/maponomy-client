@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { Card, CardContent } from '@/components/ui/card';
 import { TableComponent } from '@/components/Table';
-import { EUrl, TOrder, TServiceResponse } from '@/types';
+import { EOrderStatus, EUrl, TOrder, TServiceResponse } from '@/types';
 import { orderColumn } from '@/columns/OrderColumn';
 import { useReadDataWithBody } from '@/hooks/useReadDataWithBody';
 import { QuerySpec } from '@/lib/query';
@@ -13,8 +13,12 @@ import { DialogModal } from '@/components/DialogModal';
 import OrderForm, { OrderFormValues } from './OrderForm';
 import { useModifyData } from '@/hooks/useModifyData';
 import { Button } from '@/components/ui/button';
-import { Loader2, Upload } from 'lucide-react';
+import { Loader2, Search, Upload } from 'lucide-react';
 import { useCreateData } from '@/hooks/useCreateData';
+import { useDebounce } from '@/hooks/useDebounce';
+import { Input } from '@/components/ui/input';
+import OrderFilters from './OrderFilter';
+import { DateRange } from 'react-day-picker';
 
 const END_POINT = '/orders';
 
@@ -25,23 +29,33 @@ export default function OrdersManagement() {
     const [actionItem, setActionItem] = useState<TOrder | null>(null);
     const [open, setOpen] = useState<boolean>(false);
     const [openWarn, setOpenWarn] = useState<boolean>(false);
+    const [statuses, setStatuses] = useState<string[]>([]);
+    const [dateRange, setDateRange] = useState<DateRange | undefined>(undefined);
+    const [pushedToErpOnly, setPushedToErpOnly] = useState<boolean>(false);
 
     const [pagination, setPagination] = useState({
         pageSize: 10,
         pageIndex: 0,
     });
+    const [searchTerm, setSearchTerm] = useState<string>('');
+
+    const debouncedSearch = useDebounce(searchTerm, 300);
 
     const { data: res, isFetching, isError, error, refetch } =
         useReadDataWithBody<TServiceResponse<TOrder[]>, QuerySpec>(
             "order_list_fetch",
             `${END_POINT}/query`,
-            queryBuilder(pagination)
+            queryBuilder(pagination, debouncedSearch, {
+                statuses,
+                dateRange,
+                pushedToErpOnly
+            })
         );
 
     const { mutate: updateOrder, isPending } = useModifyData<TOrder & { id: string }, TServiceResponse<TOrder>>(END_POINT);
     const { mutate: pushToErpMutate, isPending: pushToErpPending } = useCreateData<string[], TServiceResponse<TOrder[]>>(`${END_POINT}/push-to-erp`);
 
-    const ordersToPushToErp = res?.data?.filter((order) => !order.pushedToErp).map((order) => order.id!);
+    const ordersToPushToErp = res?.data?.filter((order) => !order.pushedToErp && order.status === EOrderStatus.CONFIRMED).map((order) => order.id!);
 
     if (isError) {
         const status = (error as any)?.response?.status || (error as any)?.status;
@@ -141,15 +155,27 @@ export default function OrdersManagement() {
                 </div>
             </div>
 
-            {/* <div className="relative max-w-md">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                    placeholder="Search by name or email..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                />
-            </div> */}
+            <div className='flex flex-row items-center justify-between gap-3'>
+                <div className="relative max-w-xl">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                        placeholder="Search by name or email..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 w-96"
+                    />
+                </div>
+                <div>
+                    <OrderFilters 
+                        statuses={statuses}
+                        setStatuses={setStatuses}
+                        dateRange={dateRange}
+                        setDateRange={setDateRange}
+                        pushedToErpOnly={pushedToErpOnly}
+                        setPushedToErpOnly={setPushedToErpOnly}
+                    />
+                </div>
+            </div>
 
             <Card>
                 <CardContent className="p-0">
@@ -159,7 +185,7 @@ export default function OrdersManagement() {
                         getRowId={(row) => row.id!}
                         showActions={{
                             delete: false,
-                            edit: (row) => !row.pushedToErp,
+                            edit: (row) => !row.pushedToErp || row.status === EOrderStatus.PENDING,
                         }}
                         onClickEdit={(row) => {
                             setActionItem(row);
@@ -192,7 +218,7 @@ export default function OrdersManagement() {
                 isLoading={pushToErpPending}
             >
                 <div className='items-center flex flex-col py-5'>
-                    <h1>Are you sure you want to push {ordersToPushToErp?.length} order(s) to ERP?</h1>
+                    <h1>Are you sure you want to push all {ordersToPushToErp?.length} confirmed order(s) to ERP?</h1>
                     <p>This action cannot be undone.</p>
                 </div>
             </DialogModal>

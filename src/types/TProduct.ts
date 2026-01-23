@@ -1,9 +1,7 @@
 import { TCategory } from "./TCategory";
-import { TCustomer } from "./TCustomer";
 
 export type TProduct = {
     id?: string;
-    vendorId?: TCustomer;
     image?: string;
     name?: string;
     categoryId?: TCategory;

@@ -1,21 +1,31 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Loader2, PlusCircle, Trash } from "lucide-react";
-import { TCategory, TServiceResponse, TCustomer } from "@/types";
+import { TCategory, TServiceResponse } from "@/types";
 import { FormFieldSchema } from '@/components/DynamicForm';
 import { ProductSchema } from './ProductSchema';
 import { CategoryDTO } from '@/types/dto/CategoryDTO';
 
 
 export const productSchemaGenerator = (
-    vendorLoading: boolean,
     categoryLoading: boolean,
     setOpen: (open: boolean) => void,
     handleDeleteCategory: (id: string) => void,
     deleteCategoryPending: boolean,
-    vendorRes?: TServiceResponse<TCustomer[]>,
     categoryRes?: TServiceResponse<TCategory[]>,
 ): FormFieldSchema<ProductSchema>[] => {
     return [
+        {
+            name: "image",
+            label: "Product Image",
+            control: "file",
+            validation: {
+                required: true
+            },
+            placeholder: 'Upload',
+            layout: {
+                colSpan: 3
+            }
+        },
         {
             name: "name",
             label: "Product Name",
@@ -36,57 +46,6 @@ export const productSchemaGenerator = (
                 minLength: 1
             },
             placeholder: 'Enter product SKU'
-        },
-        {
-            name: "vendorId",
-            label: "Vendor",
-            control: "dropdown",
-            render: ({ field, form }) => {
-                return (
-                    <Select
-                        value={field.value ? String(field.value) : ""}
-                        onValueChange={(v) => form.setValue(field.name, v)}
-                    >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select customer" />
-                        </SelectTrigger>
-
-                        <SelectContent>
-                            {
-                                vendorLoading && (
-                                    <div className='text-sm p-3 items-center w-full justify-center flex italic'>
-                                        <Loader2 className='animate-spin' />
-                                    </div>
-                                )
-                            }
-                            {vendorRes?.data?.map((ct) => (
-                                <SelectItem key={ct.id} value={String(ct.id)}>
-                                    {ct.name}
-                                </SelectItem>
-                            ))}
-                            {
-                                vendorRes?.data?.length === 0 && (
-                                    <div className='text-xs p-3 items-center w-full justify-center flex italic'>No Vendors added yet!</div>
-                                )
-                            }
-                        </SelectContent>
-
-                    </Select>
-                );
-            }
-        },
-        {
-            name: "image",
-            label: "Image (Emoji)",
-            control: "text",
-            validation: {
-                required: true
-            },
-            placeholder: 'Add a suitable emoji',
-            constraint: "emoji",
-            layout: {
-                colSpan: 6
-            }
         },
         {
             name: "categoryId",

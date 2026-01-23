@@ -15,7 +15,13 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
                 render: (row: TCustomer) => (
                     <div className="flex flex-row gap-2 items-center justify-start">
                         <span className="flex items-center justify-center w-10 h-10 rounded-md bg-accent text-accent-foreground">
-                            <p className="font-bold">{withNA(row?.name?.charAt(0))}</p>
+                            {
+                                row.storeImage && row.storeImage != "" ? (
+                                    <img src={`${import.meta.env.VITE_STORAGE_API}/images/${row.storeImage}`} alt="" className="w-full h-full object-cover border border-gray-300 rounded-md" />
+                                ) : (
+                                    <p className="font-bold">{withNA(row?.name?.charAt(0))}</p>
+                                )
+                            }
                         </span>
                         <div className="flex flex-col items-start">
                             <p className="font-semibold">{withNA(clamp(row?.name, 10))}</p>

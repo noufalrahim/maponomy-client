@@ -57,16 +57,26 @@ export default function ProductSelector({
                   onClick={() => onAdd(product)}
                   className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 hover:bg-accent/50 transition"
                 >
-                  <div className="text-left">
-                    <p className="font-medium">{withNA(product?.name)}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {withNA(product?.measureUnit)}
-                    </p>
-                    <p className="text-sm font-semibold text-primary">
-                      ₹{withNA(product?.price)}
-                    </p>
+                  <div className='flex flex-row gap-2 items-center justify-center'>
+                    <span className="flex items-center justify-center w-14 h-14 rounded-md bg-accent text-accent-foreground">
+                      {
+                        product?.image && product?.image != "" ? (
+                          <img src={`${import.meta.env.VITE_STORAGE_API}/images/${product?.image}`} alt="" className="w-full h-full object-cover border border-gray-300 rounded-md" />
+                        ) : (
+                          <p className="font-bold">{withNA(product?.name?.charAt(0))}</p>
+                        )
+                      }
+                    </span>
+                    <div className="text-left">
+                      <p className="font-medium">{withNA(product?.name)}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {withNA(product?.measureUnit)}
+                      </p>
+                      <p className="text-sm font-semibold text-primary">
+                        ₹{withNA(product?.price)}
+                      </p>
+                    </div>
                   </div>
-
                   {inCart ? (
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
                       <Check className="h-4 w-4" />

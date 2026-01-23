@@ -11,7 +11,13 @@ export const productColumn: TColumn<TProduct>[] = [
         render: (row: TProduct) => (
             <div className="flex flex-row gap-2 items-center justify-start">
                 <span className="flex items-center justify-center w-10 h-10 rounded-md bg-accent text-accent-foreground">
-                    {row.image}
+                    {
+                        row.image && row.image != "" ? (
+                            <img src={`${import.meta.env.VITE_STORAGE_API}/images/${row.image}`} alt="" className="w-full h-full object-cover border border-gray-300 rounded-md" />
+                        ) : (
+                            <p className="font-bold">{withNA(row?.name?.charAt(0))}</p>
+                        )
+                    }
                 </span>
                 <div className="flex flex-col items-start">
                     <p className="font-semibold">{withNA(row?.name)}</p>
@@ -38,15 +44,6 @@ export const productColumn: TColumn<TProduct>[] = [
         render: (row: TProduct) => (
             <div className="flex flex-row gap-1 items-center text-gray-500 ">
                 <p>{withNA(row?.categoryId?.name)}</p>
-            </div>
-        )
-    },
-    {
-        key: "vendor",
-        header: "Customer",
-        render: (row: TProduct) => (
-            <div className="flex flex-row gap-1 items-center text-gray-500 ">
-                <p>{withNA(row?.vendorId?.name)}</p>
             </div>
         )
     },

@@ -17,7 +17,7 @@ export default function ManageCreateOrder() {
     const { data: limit, isLoading: dailyLimitLoading } = useReadData<TServiceResponse<{
         totalTodaysOrder: number,
         limitExceeded: boolean,
-    }>>('daily_limit_fetch', `${ORDER_END_POINT}/customer/${user?.customer?.id}/daily-limit`);
+    }>>('daily_limit_fetch', `${ORDER_END_POINT}/customer/${user?.customer?.id}/daily-limit`, undefined, !!user);
 
     if(dailyLimitLoading){
         return <Loader />
@@ -26,7 +26,7 @@ export default function ManageCreateOrder() {
     return (
         <div>
             {
-                !limit?.data?.limitExceeded ? (
+                limit?.data?.limitExceeded ? (
                     <div className="space-y-6 animate-fade-in">
                         <div className="flex text-start flex-col">
                             <h1 className="text-2xl font-bold text-foreground">Place Order</h1>

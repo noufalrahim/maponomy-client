@@ -58,6 +58,7 @@ export default function CustomerDashboard() {
               (data?.data?.frequentlyOrderedProducts ?? []).map(p => ({
                 name: p.name!,
                 count: p.quantitySold ?? 0,
+                image: p.image ? `${import.meta.env.VITE_STORAGE_API}/images/${p?.image}` : "",
               }))
             }
           />

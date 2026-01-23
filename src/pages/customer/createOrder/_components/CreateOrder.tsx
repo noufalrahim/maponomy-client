@@ -35,7 +35,7 @@ export default function CreateOrder() {
 
   console.log("User: ", user);
 
-  const { data: products, isLoading: productsIsLoading } = useReadData<TServiceResponse<TProduct[]>>('products_by_vendors_list_fetch', `${PRODUCT_END_POINT}/customer/${user?.customer?.id}`)
+  const { data: products, isLoading: productsIsLoading } = useReadData<TServiceResponse<TProduct[]>>('products_list_fetch', `${PRODUCT_END_POINT}`)
 
   const { mutate, isPending } = useCreateData<CreateOrderDTO, TServiceResponse<TOrder>>(ORDER_END_POINT);
 

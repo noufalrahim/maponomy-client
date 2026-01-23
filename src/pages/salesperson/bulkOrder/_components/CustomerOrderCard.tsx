@@ -29,8 +29,8 @@ export default function CustomerOrderCard({
 
   const { data, isFetching } =
     useReadData<TServiceResponse<TProduct[]>>(
-      'products_by_customers',
-      `${END_POINT}/customer/${customer.id}`
+      'products_list_fetch',
+      `${END_POINT}`
     );
 
   if (!currentOrder) return null;

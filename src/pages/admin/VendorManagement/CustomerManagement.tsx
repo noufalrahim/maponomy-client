@@ -23,6 +23,7 @@ import { randomGenerator } from '@/lib/utils';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import { useCustomerColumns } from '@/hooks/columns/useCustomerColumns';
+import { uploadData } from '@/api/services/uploadData';
 
 const SALES_REP_ENDPOINT = '/salespersons';
 const WAREHOUSE_END_POINT = '/warehouses';
@@ -45,6 +46,7 @@ export default function VendorManagement() {
     const [copied, setCopied] = useState<boolean>(false);
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [openResetPasswordWindow, setOpenResetPasswordWindow] = useState<boolean>(false);
+    const [uploading, setUplaoding] = useState<boolean>(false);
 
     const debouncedSearch = useDebounce(searchTerm, 300);
 
@@ -78,65 +80,91 @@ export default function VendorManagement() {
         }
     }
 
-    const handleSubmit = async (data: CustomerSchema) => {
-        console.log("Data", data)
-        if (actionItem) {
-            if (!(actionItem as TCustomer).id) {
-                toast.error("An unknown error occured");
+    const handleSubmit = async (
+        data:
+            | CustomerSchema
+            | {
+                data: CustomerSchema;
+                files: FormData;
+            }
+    ) => {
+        let payload: CreateCustomerDTO;
+        
+        if ("files" in data) {
+            setUplaoding(true);
+            const uploadRes = await uploadData<
+                TServiceResponse<{
+                    key: string;
+                    url: string;
+                }>
+            >("/uploads/images", data.files);
+
+            if (!uploadRes || !uploadRes.success || !uploadRes.data?.url) {
+                toast.error(uploadRes?.message ?? "Could not upload image");
                 return;
             }
+
+            payload = {
+                ...data.data,
+                active: data.data.active === "true",
+                latitude: parseFloat(data.data.latitude),
+                longitude: parseFloat(data.data.longitude),
+                storeImage: uploadRes.data.key,
+            };
+        } else {
+            payload = {
+                ...data,
+                active: data.active === "true",
+                latitude: parseFloat(data.latitude),
+                longitude: parseFloat(data.longitude),
+                storeImage: data.storeImage ?? "",
+            };
+        }
+        setUplaoding(false);
+        if (actionItem) {
+            if (!(actionItem as TCustomer).id) {
+                toast.error("An unknown error occurred");
+                return;
+            }
+
             updateVendor(
                 {
                     id: (actionItem as TCustomer).id!,
-                    ...data,
-                    active: data.active === "true",
-                    latitude: parseFloat(data.latitude),
-                    longitude: parseFloat(data.longitude),
-                    storeImage: data.storeImage ? data.storeImage : "",
+                    ...payload,
                 },
                 {
                     onSuccess: (res) => {
-                        if (res && res.success) {
-                            toast.success('Customer updated successfully')
-                            refetch()
-                            setOpen(false)
-                        }
-                    },
-                    onError: (err) => {
-                        console.log('An error occured! ', err);
-                        toast.error(err.message ?? 'An unknown error occured');
-                    }
-                }
-            )
-        }
-        else {
-            createVendor(
-                {
-                    ...data,
-                    active: data.active === "true",
-                    latitude: parseFloat(data.latitude),
-                    longitude: parseFloat(data.longitude),
-                    storeImage: data.storeImage ? data.storeImage : "",
-                },
-                {
-                    onSuccess: (res) => {
-                        if (res && res.success) {
-                            toast.success('Customer added successfully')
-                            refetch()
+                        if (res?.success) {
+                            toast.success("Customer updated successfully");
+                            refetch();
                             setOpen(false);
-                            setOpenPasswordWindow(true);
-                            setPassword(data.password);
                         }
                     },
                     onError: (err) => {
-                        console.log('An error occured! ', err);
-                        toast.error(err.message ?? 'An unknown error occured');
-                    }
+                        console.log("An error occurred!", err);
+                        toast.error(err.message ?? "An unknown error occurred");
+                    },
                 }
-            )
+            );
+        } else {
+            createVendor(payload, {
+                onSuccess: (res) => {
+                    if (res?.success) {
+                        toast.success("Customer added successfully");
+                        refetch();
+                        setOpen(false);
+                        setOpenPasswordWindow(true);
+                        setPassword(payload.password);
+                    }
+                },
+                onError: (err) => {
+                    console.log("An error occurred!", err);
+                    toast.error(err.message ?? "An unknown error occurred");
+                },
+            });
         }
+    };
 
-    }
 
     const handleDelete = async () => {
         deleteVendor({
@@ -260,11 +288,11 @@ export default function VendorManagement() {
                             password: (actionItem as TCustomer)?.user?.password,
                             latitude: (actionItem as TCustomer)?.latitude?.toString() ?? undefined,
                             longitude: (actionItem as TCustomer)?.longitude?.toString() ?? undefined,
-                            storeImage: (actionItem as TCustomer)?.storeImage,
+                            storeImage: (actionItem as TCustomer)?.storeImage ? `${import.meta.env.VITE_STORAGE_API}/images/${(actionItem as TCustomer)?.storeImage}` : undefined,
                             type: (actionItem as TCustomer)?.type
                         }
                     }
-                    loading={createVendorPending || updateVendorPending}
+                    loading={createVendorPending || updateVendorPending || uploading}
                 />
             </DialogModal>
             <DialogModal

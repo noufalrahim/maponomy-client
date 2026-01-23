@@ -68,8 +68,8 @@ export default function OrderForm({
 
   const { data: res, isFetching } =
     useReadData<TServiceResponse<TProduct[]>>(
-      "products_for_customer_list_fetch",
-      `${END_POINT}/customer/${actionItem?.customer?.id}`
+      "products_list_fetch",
+      `${END_POINT}`
     )
 
   const form = useForm<OrderFormValues>({

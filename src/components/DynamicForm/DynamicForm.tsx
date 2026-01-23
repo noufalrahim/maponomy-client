@@ -1,8 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { zodResolver } from "@hookform/resolvers/zod"
-import { Check, ChevronsUpDown, Loader2, Upload } from "lucide-react"
+import { Check, ChevronsUpDown, Loader2, Upload, X } from "lucide-react"
 import { useMemo, useRef, useState } from "react"
 import {
   DefaultValues,
@@ -83,8 +84,6 @@ export default function DynamicForm<T extends Record<string, any>>({
   const lettersRegex = /^[A-Za-z ]+$/
   const numericRegex = /^[0-9]+$/
 
-  console.log("Def: ", defaultValues);
-
   /* -------------------------- Zod schema generation ------------------------- */
 
   const formSchema = useMemo(() => {
@@ -145,27 +144,33 @@ export default function DynamicForm<T extends Record<string, any>>({
   })
 
   const handleSubmit: SubmitHandler<FormValues> = (data) => {
-    const hasFile = Object.values(data).some(
-      (v) => v instanceof File
-    )
-
-    if (!hasFile) {
-      onSubmit(data as unknown as T)
-      return
-    }
-
-    const formData = new FormData()
+    const files: Record<string, File> = {}
+    const json: Record<string, unknown> = {}
 
     Object.entries(data).forEach(([key, value]) => {
       if (value instanceof File) {
-        formData.append(key, value)
+        files[key] = value
       } else if (value !== undefined && value !== null) {
-        formData.append(key, String(value))
+        json[key] = value
       }
     })
 
-    onSubmit(formData as unknown as T)
+    if (Object.keys(files).length === 0) {
+      onSubmit(json as unknown as T)
+      return
+    }
+
+    const fileFormData = new FormData()
+    Object.entries(files).forEach(([_key, file]) => {
+      fileFormData.append("file", file)
+    })
+
+    onSubmit({
+      data: json,
+      files: fileFormData,
+    } as unknown as T)
   }
+
 
 
   /* ----------------------------- Field helpers ------------------------------ */
@@ -294,38 +299,79 @@ export default function DynamicForm<T extends Record<string, any>>({
     /* ------------------------- File ------------------------------ */
     if (field.control === "file") {
       const disabled = field?.editConstraint?.disabled && isEdit
+      const file = value as File | string | null
+      const isImage = file instanceof File && file.type.startsWith("image/")
+      const url =
+        file instanceof File ? URL.createObjectURL(file) : typeof file === "string" ? file : null
+      const defaultImageVal = defaultValues && defaultValues[field.name as string];
+      console.log("Def: ", defaultImageVal);
+      const accept =
+        field.fileConstraint?.type === "image"
+          ? "image/*"
+          : field.fileConstraint?.type === "pdf"
+            ? "application/pdf"
+            : field.fileConstraint?.accept
 
       return (
         <div
           onClick={() => !disabled && inputRef.current?.click()}
           className={cn(
-            "flex flex-col items-center justify-center",
-            "aspect-square w-full cursor-pointer",
-            "border-2 border-dashed rounded-md",
-            "transition-colors",
-            disabled
-              ? "opacity-50 cursor-not-allowed"
-              : "hover:border-primary"
+            "relative flex flex-col items-center justify-center",
+            "border-2 border-dashed rounded-md aspect-square cursor-pointer",
+            disabled ? "opacity-50 cursor-not-allowed" : "hover:border-primary"
           )}
         >
           <input
             ref={inputRef}
             type="file"
+            accept={accept}
             className="hidden"
             onChange={(e) => {
-              const file = e.target.files?.[0] ?? null
-              form.setValue(field.name as string, file)
+              const f = e.target.files?.[0]
+              if (!f) return
+              if (
+                field.fileConstraint?.type === "image" &&
+                !f.type.startsWith("image/")
+              )
+                return
+              if (
+                field.fileConstraint?.type === "pdf" &&
+                f.type !== "application/pdf"
+              )
+                return
+              form.setValue(field.name as string, f)
             }}
           />
+          {url && !disabled && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                form.setValue(field.name as string, null)
+                if (inputRef.current) inputRef.current.value = ""
+              }}
+              className="absolute top-1 right-1 z-10 rounded-full bg-black/70 p-1 text-white hover:bg-black"
+            >
+              <X size={14} />
+            </button>
+          )}
 
-          {value ? (
-            <span className="text-sm text-center px-2 break-all">
-              {(value as File).name}
-            </span>
+          {url ? (
+            (isImage) ? (
+              <img src={url} className="object-cover w-full h-full rounded-md" />
+            ) : (
+              defaultImageVal ? (
+                <img src={defaultImageVal} className="object-cover w-full h-full rounded-md" />
+              ) : (
+                <a href={url} target="_blank" className="text-sm underline">
+                  {typeof file === "string" ? file : file?.name}
+                </a>
+              )
+            )
           ) : (
             <>
               <Upload className="h-6 w-6 mb-2 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground text-center">
+              <span className="text-sm text-muted-foreground">
                 {field.placeholder ?? "Upload file"}
               </span>
             </>

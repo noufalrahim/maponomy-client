@@ -1,0 +1,7 @@
+services:
+  client-maponomy-poultry-dev:
+    build: .
+    container_name: client_maponomy_poultry_dev
+    ports:
+      - "9221:9221"
+    restart: unless-stopped

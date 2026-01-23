@@ -23,10 +23,10 @@ import { queryBuilder } from './queryBuilder';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
+import { uploadData } from '@/api/services/uploadData';
 
 const END_POINT = '/products';
 const CATEGORY_END_POINT = '/categories';
-const VENDOR_END_POINT = '/vendors';
 
 export default function ProductCatalog() {
 
@@ -39,9 +39,10 @@ export default function ProductCatalog() {
         pageIndex: 0
     });
     const [search, setSearch] = useState<string>('');
+    const [uploading, setUploading] = useState<boolean>(false);
 
     const debouncedSearch = useDebounce(search, 300);
-    
+
     const navigate = useNavigate();
 
     const { mutate: createProduct, isPending: createProductPending } = useCreateData<ProductDTO, TServiceResponse<TProduct>>(END_POINT);
@@ -58,7 +59,6 @@ export default function ProductCatalog() {
             queryBuilder(pagination, debouncedSearch)
         );
     const { data: categoryRes, isFetching: categoryLoading, refetch: refetchCategory } = useReadData<TServiceResponse<TCategory[]>>('category_list_fetch', CATEGORY_END_POINT);
-    const { data: vendorRes, isFetching: vendorLoading } = useReadData<TServiceResponse<TCategory[]>>('vendor_list_fetch', VENDOR_END_POINT);
 
     const handleDeleteCategory = async () => {
         deleteCategory({
@@ -78,62 +78,88 @@ export default function ProductCatalog() {
         })
     }
 
-    const handleSubmit = async (data: ProductSchema) => {
-        if (actionItem) {
-            console.log(parseFloat(data.price));
-            if (!(actionItem as TProduct).id) {
-                toast.error("An unknown error occured");
+    const handleSubmit = async (
+        data:
+            | ProductSchema
+            | {
+                data: ProductSchema;
+                files: FormData;
+            }
+    ) => {
+        let payload: ProductDTO;
+
+        if ("files" in data) {
+            setUploading(true);
+            const uploadRes = await uploadData<
+                TServiceResponse<{
+                    key: string;
+                    url: string;
+                }>
+            >("/uploads/images", data.files);
+
+            if (!uploadRes || !uploadRes.success || !uploadRes.data?.key) {
+                toast.error(uploadRes?.message ?? "Could not upload image");
                 return;
             }
+
+            payload = {
+                ...data.data,
+                active: data.data.active === "true",
+                price: parseFloat(data.data.price),
+                image: uploadRes.data.key,
+            };
+        } else {
+            payload = {
+                ...data,
+                active: data.active === "true",
+                price: parseFloat(data.price),
+                image: data.image ?? "",
+            };
+        }
+        setUploading(false);
+        if (actionItem) {
+            if (!(actionItem as TProduct).id) {
+                toast.error("An unknown error occurred");
+                return;
+            }
+
             updateProduct(
                 {
                     id: (actionItem as TProduct).id!,
-                    ...data,
-                    active: data.active === "true",
-                    price: parseFloat(data.price)
+                    ...payload,
                 },
                 {
                     onSuccess: (res) => {
-                        if (res && res.success) {
+                        if (res?.success) {
                             toast.success("Product updated successfully");
                             refetch();
                             setOpen(false);
-                        }
-                        else {
-                            toast.error("An error occured!");
+                        } else {
+                            toast.error("An error occurred!");
                         }
                     },
                     onError: (err) => {
-                        toast.error(err.message || "Something went wrong")
-                    }
+                        toast.error(err.message ?? "Something went wrong");
+                    },
                 }
-            )
-        }
-        else {
-            createProduct(
-                {
-                    ...data,
-                    active: data.active === "true",
-                    price: parseFloat(data.price)
+            );
+        } else {
+            createProduct(payload, {
+                onSuccess: (res) => {
+                    if (res?.success) {
+                        toast.success("Product added successfully");
+                        refetch();
+                        setOpen(false);
+                    } else {
+                        toast.error("An error occurred!");
+                    }
                 },
-                {
-                    onSuccess: (res) => {
-                        if (res && res.success) {
-                            toast.success("Product added successfully");
-                            refetch();
-                            setOpen(false);
-                        }
-                        else {
-                            toast.error("An error occured!");
-                        }
-                    },
-                    onError: (err) => {
-                        toast.error(err.message || "Something went wrong")
-                    }
-                }
-            )
+                onError: (err) => {
+                    toast.error(err.message ?? "Something went wrong");
+                },
+            });
         }
-    }
+    };
 
     const handleSubmitCategory = async (data: CategoryDTO) => {
         createCategory(
@@ -246,9 +272,9 @@ export default function ProductCatalog() {
                 description="Create a new product."
             >
                 <DynamicForm<ProductSchema>
-                    schema={productSchemaGenerator(vendorLoading, categoryLoading, setOpenCategory, handleDeleteCategory, deleteCategoryPending, vendorRes, categoryRes)}
+                    schema={productSchemaGenerator(categoryLoading, setOpenCategory, handleDeleteCategory, deleteCategoryPending, categoryRes)}
                     onSubmit={(data: ProductSchema) => handleSubmit(data)}
-                    loading={createProductPending || updateProductPending}
+                    loading={createProductPending || updateProductPending || uploading}
                     defaultValues={
                         {
                             name: (actionItem as TProduct)?.name,
@@ -256,7 +282,6 @@ export default function ProductCatalog() {
                             image: (actionItem as TProduct)?.image,
                             measureUnit: (actionItem as TProduct)?.measureUnit,
                             packageType: (actionItem as TProduct)?.packageType,
-                            vendorId: (actionItem as TProduct)?.vendorId?.id,
                             categoryId: (actionItem as TProduct)?.categoryId?.id,
                             price: (actionItem as TProduct)?.price,
                             active: "true"
