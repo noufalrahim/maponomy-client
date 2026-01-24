@@ -87,6 +87,20 @@ export default function ImportExport() {
 
 
   const handleExport = async (name: string) => {
+    if(!dateRange?.from || !dateRange?.to) {
+      toast.error("Please select a date range");
+      return;
+    }
+    if (dateRange?.to && dateRange?.from) {
+      const diff = dateRange?.to.getTime() - dateRange?.from.getTime();
+      const maxRange = 7 * 24 * 60 * 60 * 1000;
+
+      if (diff > maxRange) {
+        toast.error("Date range should be less than 7 days");
+        return;
+      }
+    }
+
     try {
       const token = localStorage.getItem("token");
 
@@ -162,7 +176,7 @@ export default function ImportExport() {
       case "Vendors":
         headers =
           "name,address,phone_number,warehouse_id,active\n";
-        filename = "vendors_import_template.csv";
+        filename = "customers_import_template.csv";
         break;
 
       case "Warehouses":
@@ -173,12 +187,11 @@ export default function ImportExport() {
 
       case "Products":
         headers =
-          "vendor_id,category_name,name,measure_unit,package_type,price,quantity_sold,sku,active,image\n";
+          "category_name,name,measure_unit,package_type,price,quantity_sold,sku,active,image\n";
         filename = "products_import_template.csv";
         break;
       case "Orders":
-        headers =
-          "id,vendor_id,vendor_name,warehouse_id,warehouse_name,delivery_date,delivery_start_time,delivery_end_time,status,total_amount,created_by,created_by_email,created_at,updated_at,pushed_to_erp\n";
+        headers =   "order_id,order_customer_id,order_warehouse_id,delivery_date,delivery_start_time,delivery_end_time,order_status,total_amount,order_created_by,order_created_at,order_updated_at,pushed_to_erp,creator_email,customer_id,customer_name,customer_user_id,customer_store_image,customer_latitude,customer_longitude,customer_address,customer_phone_number,customer_type,warehouse_id,warehouse_name,warehouse_address,warehouse_latitude,warehouse_longitude\n";
         filename = "orders_import_template.csv";
         break;
       default:

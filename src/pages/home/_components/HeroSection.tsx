@@ -8,7 +8,7 @@ export default function HeroSection() {
     <section className="py-16 sm:py-20 lg:py-32">
       <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center space-y-8">
         <h1 className="text-3xl sm:text-4xl lg:text-6xl font-bold tracking-tight animate-fade-in">
-          Poultry Order
+          B2B Order
           <span className="text-primary"> Management</span>
         </h1>
 
