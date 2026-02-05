@@ -6,7 +6,7 @@ import { Calendar } from "lucide-react";
 
 export const orderColumn: TColumn<TOrder>[] = [
     {
-        key: "order_id",
+        key: "id",
         header: "Order ID",
         render: (row: TProduct) => (
             <div className="flex flex-row gap-2 items-center justify-start">
@@ -15,8 +15,10 @@ export const orderColumn: TColumn<TOrder>[] = [
         )
     },
     {
-        key: "vendor",
+        key: "customer",
         header: "Customer",
+        tooltip: true,
+        tooltipValue: (row: TOrder) => row.customer?.name || '',
         render: (row: TOrder) => {
             return (
                 <div className="flex flex-row gap-1 items-center">
@@ -28,6 +30,8 @@ export const orderColumn: TColumn<TOrder>[] = [
     {
         key: "warehouse",
         header: "Warehouse",
+        tooltip: true,
+        tooltipValue: (row: TOrder) => row.warehouse?.name || '',
         render: (row: TOrder) => {
             return (
                 <div className="flex flex-row gap-1 text-gray-500">
@@ -39,6 +43,8 @@ export const orderColumn: TColumn<TOrder>[] = [
     {
         key: "salesperson",
         header: "Sales Rep",
+        tooltip: true,
+        tooltipValue: (row: TOrder) => row.salesperson?.name || '',
         render: (row: TOrder) => (
             <div className="flex flex-row gap-1 items-center text-gray-500 ">
                 <p>{withNA(row?.salesperson?.name)}</p>
@@ -72,6 +78,7 @@ export const orderColumn: TColumn<TOrder>[] = [
     {
         key: "orderItems",
         header: "Order Items",
+        tooltip: false,
         render: (row: TOrder) => (
             <div className="flex flex-row gap-1 items-center text-gray-500 ">
                 <p>{withNA(row.orderItemsCount)}</p>

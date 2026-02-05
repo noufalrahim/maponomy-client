@@ -3,4 +3,7 @@ export type TColumn<T> = {
   header: string;
   render?: (row: T) => React.ReactNode;
   hideable?: boolean;
+  minWidth?: number;
+  tooltip?: boolean;
+  tooltipValue?: (row: T) => string;
 }

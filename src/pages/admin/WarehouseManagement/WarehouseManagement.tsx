@@ -20,6 +20,7 @@ import { queryBuilder } from './queryBuilder';
 import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
+import { useGeocoding } from '@/hooks/useGeocoding';
 
 const END_POINT = '/warehouses';
 
@@ -32,12 +33,18 @@ export default function WarehouseManagement() {
         pageSize: 10,
         pageIndex: 0,
     });
+    const [location, setLocation] = useState<{
+        lat: number;
+        long: number;
+    }>();
     const [searchTerm, setSearchTerm] = useState<string>('');
 
     const debouncedSearch = useDebounce(searchTerm, 300);
     
 
     const navigate = useNavigate();
+
+    const geocoding = useGeocoding();
 
     const { data: res, isFetching, refetch, isError, error } =
         useReadDataWithBody<TServiceResponse<TWarehouse[]>, QuerySpec>(
@@ -187,9 +194,13 @@ export default function WarehouseManagement() {
                 description="Add a new warehouse. You can map vendors to this warehouse when adding or editing vendors."
             >
                 <DynamicForm<WarehouseSchema>
-                    schema={warehouseSchemaGenerator()}
+                    schema={warehouseSchemaGenerator(geocoding, setLocation)}
                     loading={createWarehousePending || updateWarehousePending}
                     onSubmit={(data) => handleSubmit(data)}
+                    formValues={{
+                        latitude: location?.lat?.toString(),
+                        longitude: location?.long?.toString()
+                    }}
                     defaultValues={
                         {
                             name: (actionItem as TWarehouse)?.name,

@@ -24,7 +24,11 @@ export interface FormFieldSchema<T extends Record<string, any>> {
 
   placeholder?: string;
 
+  onChange?: (value: any) => void;
+
   options?: FormFieldOption<T[keyof T]>[];
+
+  onSelect?: (value: any) => void;
 
   editConstraint?: {
     disabled?: boolean;

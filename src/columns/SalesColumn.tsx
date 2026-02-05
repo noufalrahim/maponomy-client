@@ -9,7 +9,16 @@ export const generateSalesColumns = (setActionItem: (item: TSalesPerson | string
   return (
     [
       {
-        key: "userId",
+        key: "id",
+        header: "ID",
+        render: (row: TSalesPerson) => (
+          <div className="flex flex-row gap-2 items-center justify-start">
+            <p className="font-semibold">{row.id}</p>
+          </div>
+        )
+      },
+      {
+        key: "name",
         header: "Sales Rep",
         render: (row: TSalesPerson) => (
           <div className="flex flex-row gap-2 items-center justify-start">
@@ -23,6 +32,8 @@ export const generateSalesColumns = (setActionItem: (item: TSalesPerson | string
       {
         key: "name",
         header: "Contact",
+        tooltip: true,
+        tooltipValue: (row: TSalesPerson) => row.user?.email || '',
         render: (row: TSalesPerson) => {
           return (
             <div className="flex flex-col gap-1 items-start text-gray-500">
@@ -57,6 +68,7 @@ export const generateSalesColumns = (setActionItem: (item: TSalesPerson | string
       {
         key: "active",
         header: "Status",
+        tooltip: false,
         render: (row: TSalesPerson) => (
           <div className="items-start flex">
             <Badge className={cn('cursor-pointer', badgeFields(row?.active ? 'active' : 'inactive').textColor, badgeFields(row?.active ? 'active' : 'inactive').bgColor)}>

@@ -7,7 +7,7 @@ import { TableComponent } from '@/components/Table';
 import { EUrl, TSalesPerson, TServiceResponse, TCustomer, TWarehouse } from '@/types';
 import { DialogModal } from '@/components/DialogModal';
 import { DynamicForm } from '@/components/DynamicForm';
-import { customerSchemaGenerator } from './SchemaGenerator';
+import { useSchemaGenerator } from './SchemaGenerator';
 import { useCreateData } from '@/hooks/useCreateData';
 import { useReadData } from '@/hooks/useReadData';
 import { CustomerSchema } from './CustomerSchema';
@@ -24,6 +24,7 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import { useCustomerColumns } from '@/hooks/columns/useCustomerColumns';
 import { uploadData } from '@/api/services/uploadData';
+import { useGeocoding } from '@/hooks/useGeocoding';
 
 const SALES_REP_ENDPOINT = '/salespersons';
 const WAREHOUSE_END_POINT = '/warehouses';
@@ -47,8 +48,16 @@ export default function VendorManagement() {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [openResetPasswordWindow, setOpenResetPasswordWindow] = useState<boolean>(false);
     const [uploading, setUplaoding] = useState<boolean>(false);
+    const [location, setLocation] = useState<{
+        lat: number;
+        long: number;
+    }>();
 
-    const debouncedSearch = useDebounce(searchTerm, 300);
+    const debouncedSearch = useDebounce(searchTerm, 500);
+
+    const geocoding = useGeocoding();
+
+    console.log("Geocodeing, : ", geocoding);
 
     const columns = useCustomerColumns(setActionItem, setOpenResetPasswordWindow);
 
@@ -58,6 +67,7 @@ export default function VendorManagement() {
             `${END_POINT}/query`,
             queryBuilder(pagination, debouncedSearch)
         );
+
     const { data: salespersonRes, isFetching: salespersonFetching } = useReadData<TServiceResponse<TSalesPerson[]>>('salesperson_list_fetch', SALES_REP_ENDPOINT);
     const { data: warehouseRes, isFetching: warehouseLoading } = useReadData<TServiceResponse<TWarehouse[]>>('warehouse_list_fetch', WAREHOUSE_END_POINT);
 
@@ -68,6 +78,8 @@ export default function VendorManagement() {
         customerId: string;
         password: string;
     }, TServiceResponse<TCustomer>>(`${END_POINT}/reset-password`);
+
+    const schema = useSchemaGenerator(salespersonFetching, warehouseLoading, !!actionItem, setShow, show, setPassword, randomGenerator, setLocation, salespersonRes, warehouseRes, geocoding)
 
     if (isError) {
         const status = (error as any)?.response?.status || (error as any)?.status;
@@ -89,7 +101,7 @@ export default function VendorManagement() {
             }
     ) => {
         let payload: CreateCustomerDTO;
-        
+
         if ("files" in data) {
             setUplaoding(true);
             const uploadRes = await uploadData<
@@ -221,7 +233,7 @@ export default function VendorManagement() {
                 <div className='flex flex-col gap-1 items-start'>
                     <h2 className="text-xl font-semibold text-foreground">Customer Management</h2>
                     {
-                        res?.count ? <p className="text-muted-foreground">{res?.count} team members</p> : null
+                        res?.count ? <p className="text-muted-foreground">{res?.count} customers</p> : null
                     }
                 </div>
                 <Button onClick={() => {
@@ -273,9 +285,13 @@ export default function VendorManagement() {
                 description="Create a customer here. You can manage customer infos."
             >
                 <DynamicForm<CustomerSchema>
-                    schema={customerSchemaGenerator(salespersonFetching, warehouseLoading, !!actionItem, setShow, show, setPassword, randomGenerator, salespersonRes, warehouseRes)}
+                    schema={schema}
                     onSubmit={(data) => handleSubmit(data)}
                     isEdit={!!actionItem}
+                    formValues={{
+                        latitude: location?.lat?.toString() ?? "",
+                        longitude: location?.long?.toString() ?? "",
+                    }}
                     defaultValues={
                         {
                             name: (actionItem as TCustomer)?.name,

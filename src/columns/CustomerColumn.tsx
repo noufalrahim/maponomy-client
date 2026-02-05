@@ -10,8 +10,20 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
     return (
         [
             {
+                key: "id",
+                header: "ID",
+                render: (row: TCustomer) => (
+                    <div className="flex flex-row gap-2 items-center justify-start">
+                        <p className="font-semibold">{row.id}</p>
+                    </div>
+                )
+            },
+            {
                 key: "customer",
                 header: "Customer",
+                minWidth: 300,
+                tooltip: true,
+                tooltipValue: (row: TCustomer) => row.name || '',
                 render: (row: TCustomer) => (
                     <div className="flex flex-row gap-2 items-center justify-start">
                         <span className="flex items-center justify-center w-10 h-10 rounded-md bg-accent text-accent-foreground">
@@ -24,10 +36,10 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
                             }
                         </span>
                         <div className="flex flex-col items-start">
-                            <p className="font-semibold">{withNA(clamp(row?.name, 10))}</p>
+                            <p className="font-semibold">{withNA(clamp(row?.name, 20))}</p>
                             <div className="flex flex-row text-gray-500 text-sm items-center justify-start">
                                 <MapPin size={13} />
-                                <p>{withNA(clamp(row?.address, 10))}</p>
+                                <p>{withNA(clamp(row?.address, 20))}</p>
                             </div>
                         </div>
                     </div>
@@ -48,6 +60,8 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
             {
                 key: "name",
                 header: "Contact",
+                tooltip: true,
+                tooltipValue: (row: TCustomer) => `${row?.phoneNumber}, ${row?.user?.email}`,
                 render: (row: TCustomer) => {
                     return (
                         <div className="flex flex-col gap-1 items-start text-gray-500 ">
@@ -66,6 +80,8 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
             {
                 key: "warehouseId",
                 header: "Warehouse",
+                tooltip: true,
+                tooltipValue: (row: TCustomer) => row.warehouseId?.name || '',
                 render: (row: TCustomer) => (
                     <div className="flex flex-row gap-1 items-center text-gray-500 ">
                         <Warehouse size={13} />
@@ -76,10 +92,12 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
             {
                 key: "salespersonId",
                 header: "Assigned To (Sales Rep)",
+                tooltip: true,
+                tooltipValue: (row: TCustomer) => row.salespersonId?.[0]?.name || '',
                 render: (row: TCustomer) => (
                     <div className="flex flex-row gap-1 items-center text-gray-500">
                         <User size={13} />
-                        <p>{row.salespersonCount}</p>
+                        <p>{withNA(row.salespersonId?.[0]?.name)}</p>
                     </div>
                 )
             },
@@ -100,7 +118,8 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
             {
                 key: "active",
                 header: "Status",
-                render: (row: TSalesPerson) => (
+                tooltip: false,
+                render: (row: TCustomer) => (
                     <div className="items-start flex">
                         <Badge className={cn('cursor-pointer', badgeFields(row?.active ? 'active' : 'inactive').textColor, badgeFields(row?.active ? 'active' : 'inactive').bgColor)}>
                             {badgeFields(row?.active ? 'active' : 'inactive').text}

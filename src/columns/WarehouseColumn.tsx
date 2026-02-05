@@ -6,6 +6,15 @@ import { Building2, MapPin, Warehouse } from "lucide-react";
 
 export const warehouseColumn: TColumn<TWarehouse>[] = [
     {
+            key: "id",
+            header: "ID",
+            render: (row: TWarehouse) => (
+              <div className="flex flex-row gap-2 items-center justify-start">
+                <p className="font-semibold">{row.id}</p>
+              </div>
+            )
+          },
+    {
         key: "name",
         header: "Warehouse",
         render: (row: TWarehouse) => (
@@ -32,13 +41,17 @@ export const warehouseColumn: TColumn<TWarehouse>[] = [
         }
     },
     {
-        key: "coordinates",
+        key: "longitude",
         header: "Coordinates",
-        render: (row: TWarehouse) => (
-            <div className="flex flex-row gap-1 items-center text-gray-500 ">
-                <p>{withNA(row?.latitude)}, {withNA(row?.longitude)}</p>
-            </div>
-        )
+        tooltip: true,
+        tooltipValue: (row: TWarehouse) => `${row?.longitude}, ${row?.latitude}`,
+        render: (row: TWarehouse) => {
+            return (
+                <div className="flex flex-row gap-1 items-center text-gray-500 ">
+                    <p>{withNA(row?.longitude)}, {withNA(row?.latitude)}</p>
+                </div>
+            )
+        }
     },
     {
         key: "customers",

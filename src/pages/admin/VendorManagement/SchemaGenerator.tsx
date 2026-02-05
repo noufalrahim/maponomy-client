@@ -1,13 +1,13 @@
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { ChevronDown, Eye, EyeOff, Loader2 } from "lucide-react";
 import { TCategory, TSalesPerson, TServiceResponse } from "@/types";
 import { FormFieldSchema } from '@/components/DynamicForm';
 import { CustomerSchema } from './CustomerSchema';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
-
-export const customerSchemaGenerator = (
+export const useSchemaGenerator = (
     salespersonLoading: boolean,
     warehouseLoading: boolean,
     isEdit: boolean,
@@ -15,10 +15,16 @@ export const customerSchemaGenerator = (
     show: boolean,
     setPassword: (password: string) => void,
     generatePassword: () => string,
+    setLocation: (location: { lat: number; long: number }) => void,
     salespersonRes?: TServiceResponse<TSalesPerson[]>,
     warehouseRes?: TServiceResponse<TCategory[]>,
-    
+    geocoding?: {
+        places: { formatted_address: string, lat: number, lon: number }[];
+        loading: boolean;
+        search: (q: string) => void;
+    }
 ): FormFieldSchema<CustomerSchema>[] => {
+
     return [
         {
             name: "storeImage",
@@ -38,13 +44,11 @@ export const customerSchemaGenerator = (
                 maxLength: 100,
                 minLength: 1
             },
-
         },
         {
             name: "type",
             label: "Customer Type",
             control: "dropdown",
-            
             options: [
                 {
                     label: "External Business (Customer)",
@@ -61,11 +65,70 @@ export const customerSchemaGenerator = (
             name: "address",
             label: "Address",
             control: "text",
-            validation: {
-                required: true,
-                minLength: 1
-            },
-            placeholder: 'Enter address'
+            render: ({ form }) => {
+                const { register, setValue, watch } = form;
+                const value = watch("address") ?? "";
+
+                return (
+                    <div className="flex flex-col gap-2">
+                        <div className="flex flex-row gap-2 items-center">
+                            <Input {...register("address")} placeholder='Enter address' />
+                            <Button
+                                type="button"
+                                className="shadow-xs"
+                                onClick={() => geocoding?.search(value)}
+                                disabled={geocoding?.loading}
+                            >
+                                {
+                                    geocoding?.loading ? <Loader2 className="animate-spin" /> : ('Search')
+                                }
+                            </Button>
+                        </div>
+
+                        {(geocoding?.places?.length !== undefined && geocoding?.places?.length > 0) ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline">
+                                        {"Select an address"}
+                                        <ChevronDown className="ml-2 h-4 w-4 opacity-50" />
+                                    </Button>
+                                </DropdownMenuTrigger>
+
+                                <DropdownMenuContent className="w-[300px]">
+                                    {geocoding?.places.map((option) => (
+                                        <DropdownMenuItem
+                                            key={option.formatted_address}
+                                            onClick={() => {
+                                                setValue("address", option.formatted_address, {
+                                                    shouldDirty: true,
+                                                    shouldValidate: true
+                                                });
+                                                console.log("Options: ", option);
+
+                                                setLocation({ lat: option.lat, long: option.lon });
+                                                
+                                                form.setValue("latitude", String(option.lat), {
+                                                    shouldDirty: true,
+                                                    shouldValidate: true,
+                                                });
+
+                                                form.setValue("longitude", String(option.lon), {
+                                                    shouldDirty: true,
+                                                    shouldValidate: true,
+                                                });
+                                            }}
+                                        >
+                                            {option.formatted_address}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : geocoding?.places.length === 0 ? (
+                            <p className="text-red-500 text-xs text-center italic">No results found</p>
+                        ) : null}
+                    </div>
+                );
+            }
         },
         {
             name: "phoneNumber",
@@ -109,12 +172,10 @@ export const customerSchemaGenerator = (
             },
             validation: {
                 required: true,
-                minLength: 6
+                minLength: 8
             },
             render: ({ form }) => {
-                const { register, setValue, getValues } = form;
-
-                const value = getValues("password") ?? "";
+                const { register, setValue } = form;
 
                 return (
                     <div className="flex gap-2 items-center">
@@ -122,13 +183,12 @@ export const customerSchemaGenerator = (
                             <Input
                                 type={show ? "text" : "password"}
                                 {...register("password")}
-                                value={value}
                                 onChange={(e) => {
-                                    setValue("password", e.target.value, { shouldValidate: true })
-                                    setPassword(e.target.value)
+                                    setValue("password", e.target.value, { shouldValidate: true });
+                                    setPassword(e.target.value);
                                 }}
                                 className="pr-10"
-                                placeholder={"Enter a strong password"}
+                                placeholder="Enter a strong password"
                                 disabled={isEdit}
                             />
                             <button
@@ -145,15 +205,18 @@ export const customerSchemaGenerator = (
                             type="button"
                             variant="outline"
                             disabled={isEdit}
-                            onClick={() =>
-                                setValue("password", generatePassword(), { shouldValidate: true })
-                            }
+                            onClick={() => {
+                                const pwd = generatePassword();
+                                setValue("password", pwd, { shouldValidate: true });
+                                setPassword(pwd);
+                            }}
                         >
                             Generate
                         </Button>
                     </div>
                 );
             }
+
 
         },
         {

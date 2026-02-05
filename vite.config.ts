@@ -11,9 +11,11 @@ export default defineConfig({
   },
   server: {
     port: 9221,
+    allowedHosts: ["oms.maponomy.com"],
   },
   preview: {
     port: 9221,
     host: true,
+    allowedHosts: ["oms.maponomy.com"],
   },
 });

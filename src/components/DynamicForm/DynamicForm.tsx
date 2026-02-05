@@ -1,10 +1,11 @@
+/* eslint-disable react-hooks/rules-of-hooks */
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable react-hooks/exhaustive-deps */
 
 import { zodResolver } from "@hookform/resolvers/zod"
 import { Check, ChevronsUpDown, Loader2, Upload, X } from "lucide-react"
-import { useMemo, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   DefaultValues,
   SubmitHandler,
@@ -34,7 +35,6 @@ import {
 } from "@/components/ui/select"
 import {
   Command,
-  CommandEmpty,
   CommandGroup,
   CommandInput,
   CommandItem,
@@ -46,7 +46,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
-import { cn, colSpanMap } from "@/lib/utils"
+import { clamp, cn, colSpanMap } from "@/lib/utils"
 import { FormFieldSchema } from "./FormFieldSchema"
 
 /* -------------------------------------------------------------------------- */
@@ -59,8 +59,10 @@ export interface DynamicFormProps<T extends Record<string, any>> {
   isEdit?: boolean;
   loading?: boolean
   defaultValues?: DefaultValues<T>
+  formValues?: Partial<T>
   formClass?: string
   gridClass?: string
+  onChange?: (values: Partial<T>) => void
 }
 
 /* -------------------------------------------------------------------------- */
@@ -73,12 +75,14 @@ export default function DynamicForm<T extends Record<string, any>>({
   loading,
   isEdit,
   defaultValues,
+  formValues,
   formClass,
   gridClass,
 }: DynamicFormProps<T>) {
   const [open, setOpen] = useState(false)
   const [autoValue, setAutoValue] = useState<string | undefined>();
   const inputRef = useRef<HTMLInputElement | null>(null);
+  const [searchValue, setSearchValue] = useState("")
 
   const emojiRegex = /^(?:\p{Emoji_Presentation}|\p{Emoji}\uFE0F)+$/u
   const lettersRegex = /^[A-Za-z ]+$/
@@ -171,6 +175,14 @@ export default function DynamicForm<T extends Record<string, any>>({
     } as unknown as T)
   }
 
+  const didInit = useRef(false);
+
+  useEffect(() => {
+    if (!didInit.current && formValues) {
+      form.reset(formValues as FormValues);
+      didInit.current = true;
+    }
+  }, [formValues]);
 
 
   /* ----------------------------- Field helpers ------------------------------ */
@@ -203,9 +215,10 @@ export default function DynamicForm<T extends Record<string, any>>({
         <Input
           type="color"
           value={String(value ?? "#000000")}
-          onChange={(e) =>
+          onChange={(e) => {
             form.setValue(field.name as string, e.target.value)
-          }
+            field.onChange?.(e.target.value)
+          }}
           disabled={field?.editConstraint?.disabled && isEdit}
         />
       )
@@ -213,53 +226,82 @@ export default function DynamicForm<T extends Record<string, any>>({
 
     /* --------------------------- Autocomplete -------------------------------- */
 
+
+    useEffect(() => {
+      setSearchValue(prev => prev)
+    }, [field.options])
+
     if (field.control === "autocomplete") {
       return (
         <Popover open={open} onOpenChange={setOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="w-full justify-between" disabled={field?.editConstraint?.disabled && isEdit}>
-              {field.options?.find(o => o.value === autoValue)?.label ??
-                field.placeholder}
+            <Button
+              variant="outline"
+              role="combobox"
+              className="w-full justify-between"
+              disabled={field?.editConstraint?.disabled && isEdit}
+            >
+              {field.options?.find(o => o.value === autoValue)?.label ? clamp(field.options?.find(o => o.value === autoValue)?.label, 20) : field.placeholder}
               <ChevronsUpDown className="opacity-50" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-[25rem] p-0">
-            <Command>
-              <CommandInput onValueChange={field.onSearch} />
+
+          <PopoverContent className="w-[25rem] p-0" align="start">
+            <Command shouldFilter={false}> {/* CRITICAL: Disable internal filtering */}
+              <CommandInput
+                placeholder="Search address..."
+                value={searchValue}
+                onValueChange={(v) => {
+                  setSearchValue(v);
+                  field.onSearch?.(v);
+                }}
+              />
+
               <CommandList>
                 {field.isLoading ? (
-                  <CommandEmpty className="flex justify-center py-4">
-                    <Loader2 className="animate-spin" />
-                  </CommandEmpty>
+                  <div className="flex justify-center py-6 text-sm">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  </div>
                 ) : (
-                  <CommandEmpty>No results.</CommandEmpty>
+                  <>
+                    {field.options && field.options.length > 0 ? (
+                      <CommandGroup>
+                        {field.options.map((opt) => (
+                          <CommandItem
+                            key={opt.value}
+                            value={opt.value}
+                            onSelect={() => {
+                              setAutoValue(opt.value);
+                              form.setValue(field.name as string, opt.value, {
+                                shouldValidate: true
+                              });
+                              field.onSelect?.(opt.value);
+                              setOpen(false);
+                            }}
+                          >
+                            {opt.label}
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                opt.value === autoValue ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : (
+                      // Manual empty state since shouldFilter is false
+                      <div className="py-6 text-center text-sm">No results found.</div>
+                    )}
+                  </>
                 )}
-                <CommandGroup>
-                  {field.options?.map(opt => (
-                    <CommandItem
-                      key={opt.value}
-                      onSelect={() => {
-                        setAutoValue(opt.value)
-                        form.setValue(field.name as string, opt.value)
-                        setOpen(false)
-                      }}
-                    >
-                      {opt.label}
-                      <Check
-                        className={cn(
-                          "ml-auto",
-                          opt.value === autoValue ? "opacity-100" : "opacity-0"
-                        )}
-                      />
-                    </CommandItem>
-                  ))}
-                </CommandGroup>
               </CommandList>
             </Command>
           </PopoverContent>
         </Popover>
-      )
+      );
     }
+
 
     /* ------------------------------ Text / Number ---------------------------- */
 
@@ -269,12 +311,13 @@ export default function DynamicForm<T extends Record<string, any>>({
           type={field.control}
           value={String(value ?? "")}
           placeholder={field.placeholder}
-          onChange={(e) =>
+          onChange={(e) => {
             form.setValue(
               field.name as string,
               applyConstraint(e.target.value, field.constraint)
             )
-          }
+            field.onChange?.(e.target.value)
+          }}
           disabled={field?.editConstraint?.disabled && isEdit}
         />
       )
@@ -285,12 +328,13 @@ export default function DynamicForm<T extends Record<string, any>>({
         <Textarea
           value={String(value ?? "")}
           placeholder={field.placeholder}
-          onChange={(e) =>
+          onChange={(e) => {
             form.setValue(
               field.name as string,
               applyConstraint(e.target.value, field.constraint)
             )
-          }
+            field.onChange?.(e.target.value)
+          }}
           disabled={field?.editConstraint?.disabled && isEdit}
         />
       )

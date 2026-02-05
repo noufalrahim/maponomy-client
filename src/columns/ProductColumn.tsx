@@ -6,8 +6,18 @@ import { badgeFields, cn, withNA } from "@/lib/utils";
 
 export const productColumn: TColumn<TProduct>[] = [
     {
+            key: "id",
+            header: "ID",
+            render: (row: TProduct) => (
+              <div className="flex flex-row gap-2 items-center justify-start">
+                <p className="font-semibold">{row.id}</p>
+              </div>
+            )
+          },
+    {
         key: "name",
         header: "Product",
+        minWidth: 400,
         render: (row: TProduct) => (
             <div className="flex flex-row gap-2 items-center justify-start">
                 <span className="flex items-center justify-center w-10 h-10 rounded-md bg-accent text-accent-foreground">

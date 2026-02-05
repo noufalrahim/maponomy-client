@@ -17,11 +17,12 @@ const importOptions = [
 ];
 
 const exportOptions = [
-  { name: 'Sales', description: 'Export sales team data' },
-  { name: 'Customers', description: 'Export all customers with warehouse info' },
-  { name: 'Warehouses', description: 'Export all warehouses' },
-  { name: 'Products', description: 'Export product catalog' },
-  { name: 'Orders', description: 'Export all orders' },
+  { key: 'sales', name: 'Sales', description: 'Export sales team data' },
+  { key: 'customers', name: 'Customers', description: 'Export all customers with warehouse info' },
+  { key: 'warehouses', name: 'Warehouses', description: 'Export all warehouses' },
+  { key: 'products', name: 'Products', description: 'Export product catalog' },
+  { key: 'orders', name: 'Orders', description: 'Export all orders' },
+  { key: 'routeOptimisationOrders', name: 'Route Optimization (Orders)', description: 'Export for route optimization' }
 ];
 
 export default function ImportExport() {
@@ -86,7 +87,7 @@ export default function ImportExport() {
   };
 
 
-  const handleExport = async (name: string) => {
+  const handleExport = async (key: string) => {
     if(!dateRange?.from || !dateRange?.to) {
       toast.error("Please select a date range");
       return;
@@ -117,7 +118,7 @@ export default function ImportExport() {
             Authorization: `Bearer ${token}`,
           },
           body: JSON.stringify({
-            type: name,
+            type: key,
             from: format(dateRange?.from ?? new Date(), "yyyy-MM-dd"),
             to: format(dateRange?.to ?? new Date(), "yyyy-MM-dd"),
           }),
@@ -134,7 +135,7 @@ export default function ImportExport() {
 
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${name.toLowerCase()}_export.csv`;
+      a.download = `${key.toLowerCase()}_export.csv`;
       document.body.appendChild(a);
       a.click();
       a.remove();
@@ -142,7 +143,7 @@ export default function ImportExport() {
       window.URL.revokeObjectURL(url);
 
       toast.success("Export completed", {
-        description: `${name} data downloaded successfully`,
+        description: `${key} data downloaded successfully`,
       });
     } catch (err: any) {
       toast.error("Export failed", {
@@ -173,9 +174,9 @@ export default function ImportExport() {
         filename = "sales_import_template.csv";
         break;
 
-      case "Vendors":
+      case "Customers":
         headers =
-          "name,address,phone_number,warehouse_id,active\n";
+          "name,address,phone_number,email,password,warehouse_id,latitude,longitude,type,store_image,active,salespersonid\n";
         filename = "customers_import_template.csv";
         break;
 
@@ -187,13 +188,10 @@ export default function ImportExport() {
 
       case "Products":
         headers =
-          "category_name,name,measure_unit,package_type,price,quantity_sold,sku,active,image\n";
+          "category_name,name,measure_unit,package_type,price,quantity_sold,sku,activen\n";
         filename = "products_import_template.csv";
         break;
-      case "Orders":
-        headers =   "order_id,order_customer_id,order_warehouse_id,delivery_date,delivery_start_time,delivery_end_time,order_status,total_amount,order_created_by,order_created_at,order_updated_at,pushed_to_erp,creator_email,customer_id,customer_name,customer_user_id,customer_store_image,customer_latitude,customer_longitude,customer_address,customer_phone_number,customer_type,warehouse_id,warehouse_name,warehouse_address,warehouse_latitude,warehouse_longitude\n";
-        filename = "orders_import_template.csv";
-        break;
+
       default:
         toast.error("No template available for this type");
         return;
@@ -299,7 +297,7 @@ export default function ImportExport() {
                   <p className="font-medium">{option.name}</p>
                   <p className="text-sm text-muted-foreground">{option.description}</p>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => handleExport(option.name)}>
+                <Button variant="outline" size="sm" onClick={() => handleExport(option.key)}>
                   <Download className="h-4 w-4" />
                   Export
                 </Button>
