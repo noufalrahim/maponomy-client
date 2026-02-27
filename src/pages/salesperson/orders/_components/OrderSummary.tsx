@@ -1,6 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Minus, Plus, Trash2, ShoppingCart, Loader2 } from 'lucide-react';
+import { Input } from '@/components/ui/input';
 import { TOrderItem } from '@/types';
 import { withNA } from '@/lib/utils';
 
@@ -63,9 +64,26 @@ export default function OrderSummary({
                       <Minus className="h-3 w-3" />
                     </button>
 
-                    <span className="w-8 text-center font-medium">
-                      {line.quantity}
-                    </span>
+                    <Input
+                      className="h-8 w-20 text-left font-medium px-2"
+                      type="number"
+                      min="0"
+                      value={line.quantity}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 0) {
+                          updateQuantity(line.productId as string, val);
+                        } else if (e.target.value === "") {
+                          updateQuantity(line.productId as string, 0);
+                        }
+                      }}
+                      onBlur={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (isNaN(val) || val < 0) {
+                          updateQuantity(line.productId as string, 0);
+                        }
+                      }}
+                    />
 
                     <button
                       onClick={() =>
@@ -100,7 +118,7 @@ export default function OrderSummary({
           disabled={!orderLines.length || submitting}
           onClick={onSubmit}
         >
-          {submitting && <Loader2 className="animate-spin"/>}
+          {submitting && <Loader2 className="animate-spin" />}
           {submitting ? 'Creating...' : 'Place Order'}
         </Button>
       </CardContent>

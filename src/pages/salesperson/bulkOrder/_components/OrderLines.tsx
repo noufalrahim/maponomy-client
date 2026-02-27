@@ -17,20 +17,20 @@ export default function OrderLines({
         o.customer.id !== customerOrder.customer.id
           ? o
           : {
-              ...o,
-              orderLines:
-                nextQty <= 0
-                  ? o.orderLines.filter(l => l.productId !== productId)
-                  : o.orderLines.map(l =>
-                      l.productId === productId
-                        ? {
-                            ...l,
-                            quantity: nextQty,
-                            lineTotal: nextQty * (l.unitPrice || 0),
-                          }
-                        : l
-                    ),
-            }
+            ...o,
+            orderLines:
+              nextQty < 0
+                ? o.orderLines.filter(l => l.productId !== productId)
+                : o.orderLines.map(l =>
+                  l.productId === productId
+                    ? {
+                      ...l,
+                      quantity: nextQty,
+                      lineTotal: nextQty * (l.unitPrice || 0),
+                    }
+                    : l
+                ),
+          }
       )
     );
   };
@@ -54,12 +54,31 @@ export default function OrderLines({
                 onClick={() =>
                   updateQty(l.productId as string, (l.quantity || 0) - 1)
                 }
-                disabled={(l.quantity || 0) <= 1}
+                disabled={(l.quantity || 0) <= 0}
               >
                 <Minus size={12} />
               </button>
 
-              <span className="w-6 text-center">{l.quantity}</span>
+              <input
+                className="w-16 text-left border rounded-md h-8 px-1"
+                type="number"
+                min="0"
+                value={l.quantity}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (!isNaN(val) && val >= 0) {
+                    updateQty(l.productId as string, val);
+                  } else if (e.target.value === "") {
+                    updateQty(l.productId as string, 0);
+                  }
+                }}
+                onBlur={(e) => {
+                  const val = parseInt(e.target.value);
+                  if (isNaN(val) || val < 0) {
+                    updateQty(l.productId as string, 0);
+                  }
+                }}
+              />
 
               <button
                 className="border p-1 rounded hover:bg-gray-100 rounded-md"
@@ -77,7 +96,7 @@ export default function OrderLines({
 
             <button
               className="text-gray-500 hover:text-red-500"
-              onClick={() => updateQty(l.productId as string, 0)}
+              onClick={() => updateQty(l.productId as string, -1)}
             >
               <Trash2 size={18} />
             </button>

@@ -16,7 +16,7 @@ const OrderItemSchema = z.object({
   productId: z.string(),
   name: z.string(),
   price: z.number(),
-  quantity: z.number().min(1)
+  quantity: z.number().min(0)
 })
 
 const OrderSchema = z.object({
@@ -82,7 +82,7 @@ export default function OrderForm({ actionItem, onSubmit, loading, setOpen }: IO
   const updateQty = (index: number, delta: number) => {
     const item = items[index]
     const next = item.quantity + delta
-    if (next < 1) return
+    if (next < 0) return
     const updated = [...items]
     updated[index] = { ...item, quantity: next }
     form.setValue("items", updated)
@@ -124,7 +124,7 @@ export default function OrderForm({ actionItem, onSubmit, loading, setOpen }: IO
               {
                 isFetching && (
                   <div className="flex items-center w-full justify-center py-2">
-                    <Loader2 className="animate-spin text-primary"/>
+                    <Loader2 className="animate-spin text-primary" />
                   </div>
                 )
               }
@@ -156,7 +156,29 @@ export default function OrderForm({ actionItem, onSubmit, loading, setOpen }: IO
                   <Minus />
                 </Button>
 
-                <span className="w-8 text-center">{item.quantity}</span>
+                <Input
+                  className="w-16 text-center"
+                  type="number"
+                  min="0"
+                  value={item.quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val) && val >= 0) {
+                      updateQty(index, val - item.quantity);
+                    } else if (e.target.value === "") {
+                      // Allow empty string temporarily for easier editing
+                      const updated = [...items];
+                      updated[index] = { ...item, quantity: 0 as unknown as number };
+                      form.setValue("items", updated);
+                    }
+                  }}
+                  onBlur={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (isNaN(val) || val < 0) {
+                      updateQty(index, 0 - item.quantity);
+                    }
+                  }}
+                />
 
                 <Button
                   type="button"

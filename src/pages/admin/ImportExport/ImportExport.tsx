@@ -2,7 +2,7 @@
 import { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse, CalendarIcon } from 'lucide-react';
+import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse, CalendarIcon, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
@@ -10,10 +10,44 @@ import { DateRange } from 'react-day-picker';
 import { Calendar } from '@/components/ui/calendar';
 
 const importOptions = [
-  { name: 'Sales', description: 'Import sales representatives', icon: Users },
-  { name: 'Customers', description: 'Import customer list with warehouse mapping', icon: Store },
-  { name: 'Warehouses', description: 'Import warehouse list', icon: Warehouse },
-  { name: 'Products', description: 'Import product catalog', icon: Package },
+  {
+    name: 'Sales',
+    description: 'Import sales representatives',
+    icon: Users,
+    notes: [
+      'Role must be set to: salesperson',
+      'Phone number must be unique',
+      'Email must be unique',
+      'active must be: true or false',
+    ],
+  },
+  {
+    name: 'Customers',
+    description: 'Import customer list with warehouse mapping',
+    icon: Store,
+    notes: [
+      'Email must be unique',
+      'Phone number must be unique',
+      'type must be: own or external',
+      'active must be: true or false',
+    ],
+  },
+  {
+    name: 'Warehouses',
+    description: 'Import warehouse list',
+    icon: Warehouse,
+    notes: [
+      'active must be: true or false',
+    ],
+  },
+  {
+    name: 'Products',
+    description: 'Import product catalog',
+    icon: Package,
+    notes: [
+      'active must be: true or false',
+    ],
+  },
 ];
 
 const exportOptions = [
@@ -29,10 +63,15 @@ export default function ImportExport() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [selectedImportType, setSelectedImportType] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [expandedNotes, setExpandedNotes] = useState<string | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: new Date(),
     to: new Date(),
   });
+
+  const toggleNotes = (name: string) => {
+    setExpandedNotes(prev => (prev === name ? null : name));
+  };
 
   const handleImport = (name: string) => {
     setSelectedImportType(name);
@@ -88,7 +127,7 @@ export default function ImportExport() {
 
 
   const handleExport = async (key: string) => {
-    if(!dateRange?.from || !dateRange?.to) {
+    if (!dateRange?.from || !dateRange?.to) {
       toast.error("Please select a date range");
       return;
     }
@@ -188,7 +227,7 @@ export default function ImportExport() {
 
       case "Products":
         headers =
-          "category_name,name,measure_unit,package_type,price,quantity_sold,sku,activen\n";
+          "category_name,name,measure_unit,package_type,price,quantity_sold,sku,active\n";
         filename = "products_import_template.csv";
         break;
 
@@ -227,29 +266,55 @@ export default function ImportExport() {
           </CardHeader>
           <CardContent className="space-y-3">
             {importOptions.map(option => (
-              <div
-                key={option.name}
-                className="flex justify-between items-center border p-4 rounded-lg"
-              >
-                <div className="flex gap-3 items-center">
-                  <option.icon className="h-5 w-5" />
-                  <div className='flex items-start flex-col'>
-                    <p className="font-medium">{option.name}</p>
-                    <p className="text-sm text-muted-foreground">{option.description}</p>
+              <div key={option.name} className="border rounded-lg overflow-hidden">
+                <div className="flex justify-between items-center p-4">
+                  <div className="flex gap-3 items-center">
+                    <option.icon className="h-5 w-5" />
+                    <div className='flex items-start text-start flex-col'>
+                      <p className="font-medium">{option.name}</p>
+                      <p className="text-sm text-muted-foreground">{option.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => toggleNotes(option.name)}
+                      title="View import notes"
+                    >
+                      <Info className="h-4 w-4 text-muted-foreground" />
+                      {expandedNotes === option.name ? (
+                        <ChevronUp className="h-3 w-3 ml-1 text-muted-foreground" />
+                      ) : (
+                        <ChevronDown className="h-3 w-3 ml-1 text-muted-foreground" />
+                      )}
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={() => handleDownloadTemplate(option.name)}>
+                      <FileSpreadsheet className="h-4 w-4" />
+                      Template
+                    </Button>
+                    <Button size="sm" disabled={loading} onClick={() => handleImport(option.name)}>
+                      <Upload className="h-4 w-4" />
+                      Import
+                    </Button>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => handleDownloadTemplate(option.name)}>
-                    <FileSpreadsheet className="h-4 w-4" />
-                    Template
-                  </Button>
-                  <Button size="sm" disabled={loading} onClick={() => handleImport(option.name)}>
-                    <Upload className="h-4 w-4" />
-                    Import
-                  </Button>
-                </div>
+                {expandedNotes === option.name && (
+                  <div className="bg-muted/40 border-t px-4 py-3">
+                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Guidelines for uploading {option.name} data</p>
+                    <ul className="space-y-1">
+                      {option.notes.map((note, i) => (
+                        <li key={i} className="flex items-center just gap-2 text-sm text-muted-foreground">
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                          {note}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ))}
+
           </CardContent>
         </Card>
 

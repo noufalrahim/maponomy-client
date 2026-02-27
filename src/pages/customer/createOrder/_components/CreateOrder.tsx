@@ -60,7 +60,7 @@ export default function CreateOrder() {
   };
 
   const updateQuantity = (productId: string, qty: number) => {
-    if (qty < 1) {
+    if (qty < 0) {
       setOrderLines(orderLines.filter(l => l.productId !== productId));
       return;
     }
