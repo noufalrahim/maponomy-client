@@ -23,6 +23,7 @@ import { Separator } from "@/components/ui/separator"
 import { Trash2, Plus, Minus, Loader2 } from "lucide-react"
 import { EOrderStatus, ERole, TOrder, TProduct, TServiceResponse } from "@/types"
 import { useReadData } from "@/hooks/useReadData"
+import { Label } from "@/components/ui/label"
 import { useSelector } from "react-redux"
 import { RootState } from "@/redux/store"
 
@@ -241,7 +242,7 @@ export default function OrderForm({
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <FormLabel>Egg Products</FormLabel>
+            <Label className="text-sm font-medium">Egg Products</Label>
             <div className="flex gap-2">
               <Select value={selectedEgg} onValueChange={setSelectedEgg}>
                 <SelectTrigger className="flex-1">
@@ -267,7 +268,7 @@ export default function OrderForm({
           </div>
 
           <div className="space-y-2">
-            <FormLabel>Other Products</FormLabel>
+            <Label className="text-sm font-medium">Other Products</Label>
             <div className="flex gap-2">
               <Select value={selectedOther} onValueChange={setSelectedOther}>
                 <SelectTrigger className="flex-1">
