@@ -22,9 +22,16 @@ export const readData = async <T>(
     } as ApiError;
   }
 
-  const finalUrl = options?.baseUrl
+  const role = localStorage.getItem("userRole");
+  
+  let finalUrl = options?.baseUrl
     ? `${options.baseUrl}${url}`
     : url;
+
+  if (role !== "admin") {
+    const separator = finalUrl.includes("?") ? "&" : "?";
+    finalUrl = `${finalUrl}${separator}active=true`;
+  }
 
   try {
     const response = await apiClient.get<T>(finalUrl, {

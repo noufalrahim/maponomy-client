@@ -2,8 +2,8 @@
 import { useRef, useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse, CalendarIcon, Info, ChevronDown, ChevronUp } from 'lucide-react';
 import { toast } from 'sonner';
+import { Download, Upload, FileSpreadsheet, Users, Store, Package, Warehouse, CalendarIcon, Info, ChevronDown, ChevronUp, ShoppingCart } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
@@ -46,6 +46,19 @@ const importOptions = [
     icon: Package,
     notes: [
       'active must be: true or false',
+    ],
+  },
+  {
+    name: 'Orders',
+    description: 'Import customer orders',
+    icon: ShoppingCart,
+    notes: [
+      'vendor_id is required',
+      'delivery_date must be YYYY-MM-DD format',
+      'start_time and end_time must be HH:MM format',
+      'product_id is required',
+      'quantity and amount must be valid numbers',
+      'Multiple items for the same order must have the exact same vendor_id, warehouse_id, delivery_date, start_time, and end_time'
     ],
   },
 ];
@@ -209,7 +222,7 @@ export default function ImportExport() {
     switch (name) {
       case "Sales":
         headers =
-          "email,password,role,name,phone_number,monthly_target,active\n";
+          "email,password,name,phone_number,monthly_target,active\n";
         filename = "sales_import_template.csv";
         break;
 
@@ -229,6 +242,12 @@ export default function ImportExport() {
         headers =
           "category_name,name,measure_unit,package_type,price,quantity_sold,sku,active\n";
         filename = "products_import_template.csv";
+        break;
+
+      case "Orders":
+        headers =
+          "vendor_id,warehouse_id,delivery_date,start_time,end_time,product_id,quantity\n";
+        filename = "orders_import_template.csv";
         break;
 
       default:

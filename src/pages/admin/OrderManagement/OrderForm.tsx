@@ -21,8 +21,10 @@ import {
 } from "@/components/ui/form"
 import { Separator } from "@/components/ui/separator"
 import { Trash2, Plus, Minus, Loader2 } from "lucide-react"
-import { EOrderStatus, TOrder, TProduct, TServiceResponse } from "@/types"
+import { EOrderStatus, ERole, TOrder, TProduct, TServiceResponse } from "@/types"
 import { useReadData } from "@/hooks/useReadData"
+import { useSelector } from "react-redux"
+import { RootState } from "@/redux/store"
 
 const OrderItemSchema = z.object({
   productId: z.string(),
@@ -64,7 +66,10 @@ export default function OrderForm({
   setOpen
 }: Props) {
 
-  const [selectedProduct, setSelectedProduct] = useState("")
+  const [selectedEgg, setSelectedEgg] = useState("")
+  const [selectedOther, setSelectedOther] = useState("")
+  const user = useSelector((state: RootState) => state.user.entity)
+  const isAdmin = user?.role === ERole.ADMIN
 
   const { data: res, isFetching } =
     useReadData<TServiceResponse<TProduct[]>>(
@@ -97,9 +102,21 @@ export default function OrderForm({
     [items]
   )
 
-  const addItem = () => {
-    if (!selectedProduct) return
-    const product = res?.data?.find(p => p.id === selectedProduct)
+  const eggRelated = useMemo(() => 
+    res?.data?.filter(p => 
+      p.name?.toLowerCase().includes("egg") || 
+      p.categoryId?.name?.toLowerCase().includes("egg")
+    ) || [], [res?.data])
+
+  const otherProducts = useMemo(() => 
+    res?.data?.filter(p => 
+      !p.name?.toLowerCase().includes("egg") && 
+      !p.categoryId?.name?.toLowerCase().includes("egg")
+    ) || [], [res?.data])
+
+  const addItem = (productId: string) => {
+    if (!productId) return
+    const product = res?.data?.find(p => p.id === productId)
     if (!product) return
     if (items.some(i => i.productId === product.id)) return
 
@@ -113,7 +130,8 @@ export default function OrderForm({
       }
     ])
 
-    setSelectedProduct("")
+    setSelectedEgg("")
+    setSelectedOther("")
   }
 
   const updateQty = (index: number, delta: number) => {
@@ -221,28 +239,58 @@ export default function OrderForm({
 
       
 
-        <div className="flex gap-3">
-          <Select value={selectedProduct} onValueChange={setSelectedProduct}>
-            <SelectTrigger className="flex-1">
-              <SelectValue placeholder="Select product to add" />
-            </SelectTrigger>
-            <SelectContent>
-              {res?.data?.map(p => (
-                <SelectItem key={p.id} value={p.id!}>
-                  {p.name}
-                </SelectItem>
-              ))}
-              {isFetching && (
-                <div className="flex justify-center py-2">
-                  <Loader2 className="animate-spin" />
-                </div>
-              )}
-            </SelectContent>
-          </Select>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <FormLabel>Egg Products</FormLabel>
+            <div className="flex gap-2">
+              <Select value={selectedEgg} onValueChange={setSelectedEgg}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select egg product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {eggRelated.map(p => (
+                    <SelectItem key={p.id} value={p.id!}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                  {isFetching && (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="animate-spin" />
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+              <Button type="button" onClick={() => addItem(selectedEgg)} disabled={!selectedEgg}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
 
-          <Button type="button" onClick={addItem}>
-            <Plus className="mr-2 h-4 w-4" /> Add
-          </Button>
+          <div className="space-y-2">
+            <FormLabel>Other Products</FormLabel>
+            <div className="flex gap-2">
+              <Select value={selectedOther} onValueChange={setSelectedOther}>
+                <SelectTrigger className="flex-1">
+                  <SelectValue placeholder="Select other product" />
+                </SelectTrigger>
+                <SelectContent>
+                  {otherProducts.map(p => (
+                    <SelectItem key={p.id} value={p.id!}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                  {isFetching && (
+                    <div className="flex justify-center py-2">
+                      <Loader2 className="animate-spin" />
+                    </div>
+                  )}
+                </SelectContent>
+              </Select>
+              <Button type="button" onClick={() => addItem(selectedOther)} disabled={!selectedOther}>
+                <Plus className="h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </div>
 
         {items.map((item, index) => (
@@ -256,7 +304,21 @@ export default function OrderForm({
               <Button type="button" size="icon" variant="outline" onClick={() => updateQty(index, -1)}>
                 <Minus />
               </Button>
-              <span>{item.quantity}</span>
+              {isAdmin ? (
+                <Input
+                  type="number"
+                  className="w-20 text-center h-10"
+                  value={item.quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value) || 0;
+                    const updated = [...items];
+                    updated[index] = { ...items[index], quantity: Math.max(1, val) };
+                    form.setValue("items", updated);
+                  }}
+                />
+              ) : (
+                <span className="w-8 text-center">{item.quantity}</span>
+              )}
               <Button type="button" size="icon" variant="outline" onClick={() => updateQty(index, 1)}>
                 <Plus />
               </Button>

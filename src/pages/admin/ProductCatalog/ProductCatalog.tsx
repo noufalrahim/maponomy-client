@@ -40,6 +40,7 @@ export default function ProductCatalog() {
     });
     const [search, setSearch] = useState<string>('');
     const [uploading, setUploading] = useState<boolean>(false);
+    const [deleteType, setDeleteType] = useState<'product' | 'category'>('product');
 
     const debouncedSearch = useDebounce(search, 300);
 
@@ -60,7 +61,14 @@ export default function ProductCatalog() {
         );
     const { data: categoryRes, isFetching: categoryLoading, refetch: refetchCategory } = useReadData<TServiceResponse<TCategory[]>>('category_list_fetch', CATEGORY_END_POINT);
 
-    const handleDeleteCategory = async () => {
+    const handleDeleteCategory = (id: string) => {
+        console.log("handleDeleteCategory called with ID: ", id);
+        setActionItem(id);
+        setDeleteType('category');
+        setOpenWarn(true);
+    };
+
+    const confirmDeleteCategory = async () => {
         deleteCategory({
             id: actionItem as string
         }, {
@@ -183,8 +191,16 @@ export default function ProductCatalog() {
     }
 
     const handleDelete = async () => {
+        if (deleteType === 'product') {
+            handleConfirmDeleteProduct();
+        } else {
+            confirmDeleteCategory();
+        }
+    };
+
+    const handleConfirmDeleteProduct = async () => {
         deleteProduct({
-            id: actionItem as string
+            id: (actionItem as TProduct).id!
         }, {
             onSuccess: (res) => {
                 if (res && res.success) {
@@ -247,8 +263,8 @@ export default function ProductCatalog() {
                         columns={productColumn}
                         getRowId={(row) => row.id!}
                         onClickDelete={(row) => {
-                            console.log("Row: ", row);
                             setActionItem(row)
+                            setDeleteType('product')
                             setOpenWarn(true)
                         }}
                         isLoading={isFetching}
@@ -306,13 +322,13 @@ export default function ProductCatalog() {
                 onOpenChange={setOpenWarn}
                 onConfirm={handleDelete}
                 cancelText="Cancel"
-                title='Delete Product'
+                title={deleteType === 'product' ? 'Delete Product' : 'Delete Category'}
                 isDelete={true}
                 onCancel={() => setOpenWarn(false)}
-                isLoading={deleteProductPending}
+                isLoading={deleteProductPending || deleteCategoryPending}
             >
                 <div className='items-center flex flex-col py-5'>
-                    <h1>Are you sure you want to delete this product?</h1>
+                    <h1>Are you sure you want to delete this {deleteType === 'product' ? 'product' : 'category'}?</h1>
                     <p>This action cannot be undone.</p>
                 </div>
             </DialogModal>

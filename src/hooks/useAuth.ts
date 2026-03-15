@@ -28,6 +28,7 @@ export function useAuth() {
       if (res?.data) {
         setUser(res.data);
         localStorage.setItem('token', res.data.token ?? '');
+        localStorage.setItem('userRole', res.data.role ?? '');
         navigate('/');
       }
     },
@@ -48,6 +49,7 @@ export function useAuth() {
       if (res?.data) {
         setUser(res?.data);
         localStorage.setItem('token', res?.data?.token ?? '');
+        localStorage.setItem('userRole', res?.data?.role ?? '');
         console.log("RES: ", res?.data);
         if(res?.data?.role === ERole.SALESPERSON){
           navigate(EUrl.SALES)
@@ -78,6 +80,7 @@ export function useAuth() {
   const signOut = useCallback(() => {
     setUser(null);
     localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
     navigate(EUrl.HOME);
     queryClient.clear();
   }, [navigate]);

@@ -84,10 +84,23 @@ export const productSchemaGenerator = (
                                         onClick={(e) => {
                                             e.preventDefault();
                                             e.stopPropagation();
+                                        }}
+                                        onPointerDown={(e) => {
+                                            console.log("Trash icon pointer down for ID: ", ct.id);
+                                            e.preventDefault();
+                                            e.stopPropagation();
                                             handleDeleteCategory(ct.id!);
                                         }}
+                                        onMouseDown={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }}
+                                        onClickCapture={(e) => {
+                                            e.preventDefault();
+                                            e.stopPropagation();
+                                        }}
                                         disabled={deleteCategoryPending}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity z-50"
                                     >
                                         {deleteCategoryPending ? (
                                             <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
