@@ -1,8 +1,10 @@
+import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { withNA } from '@/lib/utils';
 import { TOrderItem, TProduct } from '@/types';
-import { Check, Plus } from 'lucide-react';
+import { Check, Plus, ChevronDown, ChevronUp } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface Props {
   products: TProduct[];
@@ -17,6 +19,27 @@ export default function ProductSelector({
   onAdd,
   isLoading,
 }: Props) {
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({});
+
+  const toggleCategory = (categoryName: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [categoryName]: !prev[categoryName]
+    }));
+  };
+
+  // Group products by category
+  const groupedProducts = products.reduce((acc, product) => {
+    const categoryName = product.categoryId?.name || 'Uncategorized';
+    if (!acc[categoryName]) {
+      acc[categoryName] = [];
+    }
+    acc[categoryName].push(product);
+    return acc;
+  }, {} as Record<string, TProduct[]>);
+
+  const categories = Object.keys(groupedProducts).sort();
+
   return (
     <Card>
       <CardHeader className='flex items-start'>
@@ -45,48 +68,70 @@ export default function ProductSelector({
             No products available
           </p>
         ) : (
-          <div className="grid gap-3 sm:grid-cols-2">
-            {products.map(product => {
-              const inCart = orderLines.find(
-                l => l.productId === product.id
-              );
+          <div className="space-y-4">
+            {categories.map(categoryName => {
+              const isExpanded = expandedCategories[categoryName] ?? true; // Default to expanded
+              const categoryProducts = groupedProducts[categoryName];
 
               return (
-                <button
-                  key={product.id}
-                  onClick={() => onAdd(product)}
-                  className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 hover:bg-accent/50 transition"
-                >
-                  <div className='flex flex-row gap-2 items-center justify-center'>
-                    <span className="flex items-center justify-center w-14 h-14 rounded-md bg-accent text-accent-foreground">
-                      {
-                        product?.image && product?.image != "" ? (
-                          <img src={`${import.meta.env.VITE_STORAGE_API}/images/${product?.image}`} alt="" className="w-full h-full object-cover border border-gray-300 rounded-md" />
-                        ) : (
-                          <p className="font-bold">{withNA(product?.name?.charAt(0))}</p>
-                        )
-                      }
-                    </span>
-                    <div className="text-left">
-                      <p className="font-medium">{withNA(product?.name)}</p>
-                      <p className="text-sm text-muted-foreground">
-                        {withNA(product?.measureUnit)}
-                      </p>
-                      <p className="text-sm font-semibold text-primary">
-                        ₹{withNA(product?.price)}
-                      </p>
-                    </div>
+                <div key={categoryName} className="border rounded-lg overflow-hidden">
+                  <button
+                    onClick={() => toggleCategory(categoryName)}
+                    className="w-full flex items-center justify-between p-4 bg-accent/30 hover:bg-accent/50 transition-colors"
+                  >
+                    <h3 className="font-semibold text-md">{categoryName} ({categoryProducts.length})</h3>
+                    {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                  </button>
+
+                  <div className={cn(
+                    "grid gap-3 p-4 sm:grid-cols-2",
+                    !isExpanded && "hidden"
+                  )}>
+                    {categoryProducts.map(product => {
+                      const inCart = orderLines.find(
+                        l => l.productId === product.id
+                      );
+
+                      return (
+                        <button
+                          key={product.id}
+                          onClick={() => onAdd(product)}
+                          className="flex items-center justify-between p-4 rounded-lg border hover:border-primary/30 hover:bg-accent/50 transition text-left"
+                        >
+                          <div className='flex flex-row gap-3 items-center'>
+                            <span className="flex items-center justify-center w-14 h-14 rounded-md bg-accent text-accent-foreground shrink-0 overflow-hidden">
+                              {
+                                product?.image && product?.image != "" ? (
+                                  <img src={`${import.meta.env.VITE_STORAGE_API}/images/${product?.image}`} alt="" className="w-full h-full object-cover" />
+                                ) : (
+                                  <p className="font-bold">{withNA(product?.name?.charAt(0))}</p>
+                                )
+                              }
+                            </span>
+                            <div>
+                              <p className="font-medium line-clamp-1">{withNA(product?.name)}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {withNA(product?.measureUnit)}
+                              </p>
+                              <p className="text-sm font-semibold text-primary">
+                                ₹{withNA(product?.price)}
+                              </p>
+                            </div>
+                          </div>
+                          {inCart ? (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground shrink-0">
+                              <Check className="h-4 w-4" />
+                            </div>
+                          ) : (
+                            <div className="flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground shrink-0">
+                              <Plus className="h-4 w-4" />
+                            </div>
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                  {inCart ? (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary text-primary-foreground">
-                      <Check className="h-4 w-4" />
-                    </div>
-                  ) : (
-                    <div className="flex h-8 w-8 items-center justify-center rounded-full border text-muted-foreground">
-                      <Plus className="h-4 w-4" />
-                    </div>
-                  )}
-                </button>
+                </div>
               );
             })}
           </div>

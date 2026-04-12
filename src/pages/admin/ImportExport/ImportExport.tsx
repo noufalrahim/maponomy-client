@@ -144,15 +144,15 @@ export default function ImportExport() {
       toast.error("Please select a date range");
       return;
     }
-    if (dateRange?.to && dateRange?.from) {
-      const diff = dateRange?.to.getTime() - dateRange?.from.getTime();
-      const maxRange = 7 * 24 * 60 * 60 * 1000;
+    // if (dateRange?.to && dateRange?.from) {
+    //   const diff = dateRange?.to.getTime() - dateRange?.from.getTime();
+    //   const maxRange = 7 * 24 * 60 * 60 * 1000;
 
-      if (diff > maxRange) {
-        toast.error("Date range should be less than 7 days");
-        return;
-      }
-    }
+    //   if (diff > maxRange) {
+    //     toast.error("Date range should be less than 7 days");
+    //     return;
+    //   }
+    // }
 
     try {
       const token = localStorage.getItem("token");
