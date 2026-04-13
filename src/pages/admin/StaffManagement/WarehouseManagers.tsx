@@ -1,10 +1,10 @@
 import { Plus, Search } from "lucide-react";
 import { TableComponent } from "@/components/Table";
-import { ERole, EUrl, TServiceResponse, TUser } from "@/types";
+import { ERole, TServiceResponse, TUser } from "@/types";
 import { useReadDataWithBody } from "@/hooks/useReadDataWithBody";
 import { QuerySpec } from "@/lib/query";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+  // removed useNavigate
 import { useState } from "react";
 import { DialogModal } from "@/components/DialogModal";
 import { useModifyData } from "@/hooks/useModifyData";
@@ -12,7 +12,7 @@ import { useCreateData } from "@/hooks/useCreateData";
 import { FormFieldSchema } from "@/components/DynamicForm";
 import DynamicForm from "@/components/DynamicForm/DynamicForm";
 import { TColumn } from "@/types";
-import { z } from "zod";
+// import { z } removed
 import { useReadData } from "@/hooks/useReadData";
 import { TWarehouse } from "@/types/TWarehouse";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -25,7 +25,7 @@ import { randomGenerator } from "@/lib/utils";
 const END_POINT = "/users";
 
 export default function WarehouseManagers() {
-  const navigate = useNavigate();
+  // navigate removed
 
   const [open, setOpen] = useState<boolean>(false);
   const [actionItem, setActionItem] = useState<TUser | null>(null);
@@ -44,7 +44,7 @@ export default function WarehouseManagers() {
   );
   
   const warehouseOptions = warehousesRes?.data?.map((w) => ({
-    label: w.name,
+    label: w.name || '',
     value: w.id as string,
   })) || [];
 
@@ -60,7 +60,7 @@ export default function WarehouseManagers() {
             { field: "role", op: "eq", value: ERole.WAREHOUSE_MANAGER },
             ...(debouncedSearch ? [{
                or: [
-                 { field: "email", op: "like", value: debouncedSearch }
+                 { field: "email", op: "like" as const, value: debouncedSearch }
                ]
             }] : [])
           ]
@@ -68,7 +68,7 @@ export default function WarehouseManagers() {
       }
     );
 
-  const { mutate: updateUser, isPending: isUpdating } = useModifyData<Partial<TUser>, TServiceResponse<TUser>>(END_POINT);
+  const { mutate: updateUser, isPending: isUpdating } = useModifyData<Partial<TUser> & { id: string }, TServiceResponse<TUser>>(END_POINT);
   const { mutate: createUser, isPending: isCreating } = useCreateData<any, TServiceResponse<any>>("/auth/signup");
 
   if (isError) {
@@ -145,14 +145,14 @@ export default function WarehouseManagers() {
       name: "email",
       label: "Email",
       control: "text",
-      required: true,
+      validation: { required: true },
       hidden: !!actionItem?.id
     },
     {
       name: "password",
       label: "Password",
       control: "text",
-      required: !actionItem?.id,
+      validation: { required: !actionItem?.id },
       hidden: !!actionItem?.id,
       render: ({ form }) => {
         const { register, setValue, getValues } = form;
@@ -196,7 +196,7 @@ export default function WarehouseManagers() {
       label: "Warehouse",
       control: "dropdown",
       options: warehouseOptions,
-      required: true,
+      validation: { required: true },
     },
     {
       name: "isActive",
@@ -206,17 +206,12 @@ export default function WarehouseManagers() {
         { label: "Active", value: "true" },
         { label: "Inactive", value: "false" }
       ],
-      required: true,
+      validation: { required: true },
       hidden: !actionItem?.id
     }
   ];
 
-  const validator = z.object({
-     email: actionItem?.id ? z.string().optional() : z.string().email(),
-     password: actionItem?.id ? z.string().optional() : z.string().min(6),
-     warehouseId: z.string().min(1, "Warehouse is required"),
-     isActive: z.string().optional()
-  });
+  // validator unused
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -257,11 +252,7 @@ export default function WarehouseManagers() {
               setActionItem(row);
               setOpen(true);
             }}
-            onAddNew={() => {
-              setActionItem(null);
-              setOpen(true);
-            }}
-            addNewText="Add New Manager"
+            // onAddNew removed
             pagination={pagination}
             onPaginationChange={setPagination}
             totalItems={res?.count || 10}
@@ -283,9 +274,7 @@ export default function WarehouseManagers() {
              warehouseId: actionItem.warehouseId,
              isActive: String(actionItem.isActive)
           } : {}}
-          validationSchema={validator as any}
           loading={isUpdating || isCreating}
-          submitText="Save"
         />
       </DialogModal>
     </div>

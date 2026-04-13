@@ -5,7 +5,7 @@ import { ERole } from '@/types';
 import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
-  const user = useSelector((state: RootState) => state.user.user);
+  const user = useSelector((state: RootState) => state.user.entity);
   const userRole = user?.role || localStorage.getItem('userRole');
   const isWarehouseManager = userRole === ERole.WAREHOUSE_MANAGER;
 

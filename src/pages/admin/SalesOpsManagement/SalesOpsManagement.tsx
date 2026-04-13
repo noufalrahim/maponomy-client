@@ -409,7 +409,7 @@ export default function SalesOpsManagement() {
                             placeholder: "Select Salesperson",
                             options: res?.data
                                 ?.filter(s => s.id !== (actionItem as TSalesPerson)?.id && s.active)
-                                ?.map(s => ({ label: s.name, value: s.id! })) || [],
+                                ?.map(s => ({ label: s.name || '', value: s.id! })) || [],
                             validation: {
                                 required: true
                             }

@@ -1,10 +1,10 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { TableComponent } from "@/components/Table";
-import { ERole, EUrl, TServiceResponse, TUser } from "@/types";
+import { ERole, TServiceResponse, TUser } from "@/types";
 import { useReadDataWithBody } from "@/hooks/useReadDataWithBody";
 import { QuerySpec } from "@/lib/query";
 import { toast } from "sonner";
-import { useNavigate } from "react-router-dom";
+  // removed useNavigate
 import { useState } from "react";
 import { DialogModal } from "@/components/DialogModal";
 import { useModifyData } from "@/hooks/useModifyData";
@@ -12,7 +12,7 @@ import { useCreateData } from "@/hooks/useCreateData";
 import { FormFieldSchema } from "@/components/DynamicForm";
 import DynamicForm from "@/components/DynamicForm/DynamicForm";
 import { TColumn } from "@/types";
-import { z } from "zod";
+// import { z } removed
 import { useReadData } from "@/hooks/useReadData";
 import { TWarehouse } from "@/types/TWarehouse";
 import { Plus, Search } from "lucide-react";
@@ -25,7 +25,7 @@ import { randomGenerator } from "@/lib/utils";
 const END_POINT = "/users";
 
 export default function StaffManagement() {
-  const navigate = useNavigate();
+  // navigate removed
 
   const [open, setOpen] = useState<boolean>(false);
   const [actionItem, setActionItem] = useState<TUser | null>(null);
@@ -42,11 +42,6 @@ export default function StaffManagement() {
     "warehouses",
     "/warehouses"
   );
-  
-  const warehouseOptions = warehousesRes?.data?.map((w) => ({
-    label: w.name,
-    value: w.id as string,
-  })) || [];
 
   const { data: res, isFetching, isError, error, refetch } =
     useReadDataWithBody<TServiceResponse<TUser[]>, QuerySpec>(
@@ -60,7 +55,7 @@ export default function StaffManagement() {
             { field: "role", op: "eq", value: ERole.ADMIN },
             ...(debouncedSearch ? [{
                or: [
-                 { field: "email", op: "like", value: debouncedSearch }
+                 { field: "email", op: "like" as const, value: debouncedSearch }
                ]
             }] : [])
           ]
@@ -68,7 +63,7 @@ export default function StaffManagement() {
       }
     );
 
-  const { mutate: updateUser, isPending: isUpdating } = useModifyData<Partial<TUser>, TServiceResponse<TUser>>(END_POINT);
+  const { mutate: updateUser, isPending: isUpdating } = useModifyData<Partial<TUser> & { id: string }, TServiceResponse<TUser>>(END_POINT);
   // register API doesn't allow warehouse managers natively maybe? wait, POST /auth/signup or POST /users ?
   // POST /users is generic CRUD which works. Wait, generic CRUD might not hash passwords if not overridden!
   // Let's use auth register endpoint or handle password hashing.
@@ -156,14 +151,14 @@ export default function StaffManagement() {
       name: "email",
       label: "Email",
       control: "text",
-      required: true,
+      validation: { required: true },
       hidden: !!actionItem?.id
     },
     {
       name: "password",
       label: "Password",
       control: "text",
-      required: !actionItem?.id,
+      validation: { required: !actionItem?.id },
       hidden: !!actionItem?.id,
       render: ({ form }) => {
         const { register, setValue, getValues } = form;
@@ -216,18 +211,12 @@ export default function StaffManagement() {
         { label: "Active", value: "true" },
         { label: "Inactive", value: "false" }
       ],
-      required: true,
+      validation: { required: true },
       hidden: !actionItem?.id
     }
   ];
 
-  const validator = z.object({
-     email: actionItem?.id ? z.string().optional() : z.string().email(),
-     password: actionItem?.id ? z.string().optional() : z.string().min(6),
-     role: actionItem?.id ? z.string().optional() : z.string(),
-     warehouseId: z.string().optional(),
-     isActive: z.string().optional()
-  });
+  // validator unused
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -268,11 +257,7 @@ export default function StaffManagement() {
               setActionItem(row);
               setOpen(true);
             }}
-            onAddNew={() => {
-              setActionItem(null);
-              setOpen(true);
-            }}
-            addNewText="Add New Admin"
+            // onAddNew removed
             pagination={pagination}
             onPaginationChange={setPagination}
             totalItems={res?.count || 10}
@@ -294,9 +279,7 @@ export default function StaffManagement() {
              warehouseId: actionItem.warehouseId,
              isActive: String(actionItem.isActive)
           } : {}}
-          validationSchema={validator as any}
           loading={isUpdating || isCreating}
-          submitText="Save"
         />
       </DialogModal>
     </div>

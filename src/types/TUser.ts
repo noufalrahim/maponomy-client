@@ -12,6 +12,7 @@ export type TUser = {
   vendor?: TCustomer;
   customer?: TCustomer;
   warehouseId?: string;
+  isActive?: boolean;
 }
 
 export type SigninDTO = {

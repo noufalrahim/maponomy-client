@@ -19,10 +19,12 @@ export interface FormFieldOption<T = any> {
 
 export interface FormFieldSchema<T extends Record<string, any>> {
   name: string;
-  label: string;
+  label?: string;
   control: ControlType;
+  hidden?: boolean;
 
   placeholder?: string;
+  defaultValue?: any;
 
   onChange?: (value: any) => void;
 
