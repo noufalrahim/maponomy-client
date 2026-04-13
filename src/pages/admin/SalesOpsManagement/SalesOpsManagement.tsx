@@ -33,6 +33,7 @@ export default function SalesOpsManagement() {
     const [openWarn, setOpenWarn] = useState<boolean>(false);
     const [show, setShow] = useState<boolean>(false);
     const [openResetPasswordWindow, setOpenResetPasswordWindow] = useState<boolean>(false);
+    const [openReassignWindow, setOpenReassignWindow] = useState<boolean>(false);
     const [pagination, setPagination] = useState({
         pageSize: 10,
         pageIndex: 0
@@ -49,7 +50,7 @@ export default function SalesOpsManagement() {
             `${END_POINT}/query`,
             queryBuilder(pagination, debouncedSearch)
         );
-    const columns = useSalesColumns(setActionItem, setOpenResetPasswordWindow);
+    const columns = useSalesColumns(setActionItem, setOpenResetPasswordWindow, setOpenReassignWindow);
 
     const { mutate, isPending } = useCreateData<SalesPersonCreateDTO, TServiceResponse<TSalesPerson>>(END_POINT);
     const { mutate: deleteSalesperson, isPending: deleteSalespersonPending } = useDeleteData<TServiceResponse<void>>(END_POINT);
@@ -58,6 +59,10 @@ export default function SalesOpsManagement() {
         password: string;
     }, TServiceResponse<TSalesPerson>>(`${END_POINT}/reset-password`);
     const { mutate: updateSalesperson, isPending: updateSalespersonPending } = useModifyData<SalesPersonEditDTO, TServiceResponse<TSalesPerson>>(END_POINT);
+    const { mutate: reassignVendors, isPending: reassignVendorsPending } = useCreateData<{
+        oldSalespersonId: string;
+        newSalespersonId: string;
+    }, TServiceResponse<void>>(`${END_POINT}/reassign`);
 
     const handleCopy = async () => {
         await navigator.clipboard.writeText(password)
@@ -150,6 +155,29 @@ export default function SalesOpsManagement() {
                         setOpenResetPasswordWindow(false)
                         setOpenPasswordWindow(true)
 
+                    }
+                },
+                onError: (err) => {
+                    console.log('An error occured! ', err);
+                    toast.error(err.message ?? 'An unknown error occured');
+                }
+            }
+        )
+    }
+
+    const handleReassign = async ({ targetSalespersonId }: { targetSalespersonId: string }) => {
+        if (!actionItem || typeof actionItem === 'string') return;
+        reassignVendors(
+            {
+                oldSalespersonId: (actionItem as TSalesPerson).id!,
+                newSalespersonId: targetSalespersonId
+            },
+            {
+                onSuccess: (res) => {
+                    if (res && res.success) {
+                        toast.success('Vendors reassigned successfully')
+                        setOpenReassignWindow(false)
+                        refetch()
                     }
                 },
                 onError: (err) => {
@@ -362,6 +390,33 @@ export default function SalesOpsManagement() {
                         password: string
                     }) => handleResetPassword(data)}
                     loading={resetPasswordPending}
+                />
+            </DialogModal>
+            <DialogModal
+                open={openReassignWindow}
+                onOpenChange={setOpenReassignWindow}
+                title='Reassign Customers'
+                description={`Move all customers from ${(actionItem as TSalesPerson)?.name} to another salesperson.`}
+            >
+                <DynamicForm<{
+                    targetSalespersonId: string
+                }>
+                    schema={[
+                        {
+                            name: "targetSalespersonId",
+                            label: "Select New Sales Representative",
+                            control: "dropdown",
+                            placeholder: "Select Salesperson",
+                            options: res?.data
+                                ?.filter(s => s.id !== (actionItem as TSalesPerson)?.id && s.active)
+                                ?.map(s => ({ label: s.name, value: s.id! })) || [],
+                            validation: {
+                                required: true
+                            }
+                        }
+                    ]}
+                    onSubmit={(data) => handleReassign(data)}
+                    loading={reassignVendorsPending}
                 />
             </DialogModal>
         </div>

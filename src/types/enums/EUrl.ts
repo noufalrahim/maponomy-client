@@ -21,6 +21,9 @@ export enum EUrl {
     ADMIN_ORDERS = '/admin/orders',
     ADMIN_TARGETS = '/admin/targets',
     ADMIN_IMPORT_EXPORT = '/admin/import-export',
+    ADMIN_STAFF_MANAGEMENT = '/admin/staff-management',
+    ADMIN_WAREHOUSE_MANAGERS = '/admin/warehouse-managers',
+    WAREHOUSE_MANAGER_LOGIN = '/warehouse/login',
 
     CUSTOMER = '/customer',
     CUSTOMER_LOGIN = '/customer/login',

@@ -52,6 +52,17 @@ export default function HeroSection() {
               Customer Portal
             </Button>
           </Link>
+
+          <Link to={EUrl.WAREHOUSE_MANAGER_LOGIN} className="w-full sm:w-auto">
+            <Button
+              size="lg"
+              variant="outline"
+              className="h-14 w-full sm:w-auto px-8 text-base bg-gray-100 border-none"
+            >
+              <Users2 className="h-5 w-5" />
+              Warehouse Portal
+            </Button>
+          </Link>
         </div>
       </div>
     </section>

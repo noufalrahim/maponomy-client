@@ -54,7 +54,7 @@ export function useAuth() {
         if(res?.data?.role === ERole.SALESPERSON){
           navigate(EUrl.SALES)
         }
-        else if(res?.data?.role === ERole.ADMIN){
+        else if(res?.data?.role === ERole.ADMIN || res?.data?.role === ERole.WAREHOUSE_MANAGER){
           navigate(EUrl.ADMIN_DASHBOARD)
         }
         else if(res?.data?.role === ERole.CUSTOMER){

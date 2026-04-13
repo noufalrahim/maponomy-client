@@ -11,6 +11,7 @@ export type TUser = {
   salesperson?: TSalesPerson;
   vendor?: TCustomer;
   customer?: TCustomer;
+  warehouseId?: string;
 }
 
 export type SigninDTO = {

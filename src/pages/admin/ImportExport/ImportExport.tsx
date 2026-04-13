@@ -278,64 +278,65 @@ export default function ImportExport() {
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader className='flex items-start flex-col'>
-            <CardTitle>Import Data</CardTitle>
-            <CardDescription>Upload CSV / Excel files</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            {importOptions.map(option => (
-              <div key={option.name} className="border rounded-lg overflow-hidden">
-                <div className="flex justify-between items-center p-4">
-                  <div className="flex gap-3 items-center">
-                    <option.icon className="h-5 w-5" />
-                    <div className='flex items-start text-start flex-col'>
-                      <p className="font-medium">{option.name}</p>
-                      <p className="text-sm text-muted-foreground">{option.description}</p>
+        {localStorage.getItem('userRole') !== 'warehouse_manager' && (
+          <Card>
+            <CardHeader className='flex items-start flex-col'>
+              <CardTitle>Import Data</CardTitle>
+              <CardDescription>Upload CSV / Excel files</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              {importOptions.map(option => (
+                <div key={option.name} className="border rounded-lg overflow-hidden">
+                  <div className="flex justify-between items-center p-4">
+                    <div className="flex gap-3 items-center">
+                      <option.icon className="h-5 w-5" />
+                      <div className='flex items-start text-start flex-col'>
+                        <p className="font-medium">{option.name}</p>
+                        <p className="text-sm text-muted-foreground">{option.description}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleNotes(option.name)}
+                        title="View import notes"
+                      >
+                        <Info className="h-4 w-4 text-muted-foreground" />
+                        {expandedNotes === option.name ? (
+                          <ChevronUp className="h-3 w-3 ml-1 text-muted-foreground" />
+                        ) : (
+                          <ChevronDown className="h-3 w-3 ml-1 text-muted-foreground" />
+                        )}
+                      </Button>
+                      <Button variant="outline" size="sm" onClick={() => handleDownloadTemplate(option.name)}>
+                        <FileSpreadsheet className="h-4 w-4" />
+                        Template
+                      </Button>
+                      <Button size="sm" disabled={loading} onClick={() => handleImport(option.name)}>
+                        <Upload className="h-4 w-4" />
+                        Import
+                      </Button>
                     </div>
                   </div>
-                  <div className="flex gap-2 items-center">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleNotes(option.name)}
-                      title="View import notes"
-                    >
-                      <Info className="h-4 w-4 text-muted-foreground" />
-                      {expandedNotes === option.name ? (
-                        <ChevronUp className="h-3 w-3 ml-1 text-muted-foreground" />
-                      ) : (
-                        <ChevronDown className="h-3 w-3 ml-1 text-muted-foreground" />
-                      )}
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={() => handleDownloadTemplate(option.name)}>
-                      <FileSpreadsheet className="h-4 w-4" />
-                      Template
-                    </Button>
-                    <Button size="sm" disabled={loading} onClick={() => handleImport(option.name)}>
-                      <Upload className="h-4 w-4" />
-                      Import
-                    </Button>
-                  </div>
+                  {expandedNotes === option.name && (
+                    <div className="bg-muted/40 border-t px-4 py-3">
+                      <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Guidelines for uploading {option.name} data</p>
+                      <ul className="space-y-1">
+                        {option.notes.map((note, i) => (
+                          <li key={i} className="flex items-center just gap-2 text-sm text-muted-foreground">
+                            <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
+                            {note}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-                {expandedNotes === option.name && (
-                  <div className="bg-muted/40 border-t px-4 py-3">
-                    <p className="text-xs font-semibold text-muted-foreground mb-2 uppercase tracking-wide">Guidelines for uploading {option.name} data</p>
-                    <ul className="space-y-1">
-                      {option.notes.map((note, i) => (
-                        <li key={i} className="flex items-center just gap-2 text-sm text-muted-foreground">
-                          <span className="h-1.5 w-1.5 rounded-full bg-primary/60 shrink-0" />
-                          {note}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-              </div>
-            ))}
-
-          </CardContent>
-        </Card>
+              ))}
+            </CardContent>
+          </Card>
+        )}
 
         <Card>
           <CardHeader className='flex items-start flex-row justify-between'>

@@ -3,9 +3,13 @@ import { Progress } from "@/components/ui/progress"
 import { Badge } from "@/components/ui/badge";
 import { badgeFields, cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { Key } from "lucide-react";
+import { Key, Users } from "lucide-react";
 
-export const generateSalesColumns = (setActionItem: (item: TSalesPerson | string | null | undefined) => void, setOpenResetPasswordWindow: (open: boolean) => void): TColumn<TSalesPerson>[] => {
+export const generateSalesColumns = (
+  setActionItem: (item: TSalesPerson | string | null | undefined) => void,
+  setOpenResetPasswordWindow: (open: boolean) => void,
+  setOpenReassignWindow: (open: boolean) => void
+): TColumn<TSalesPerson>[] => {
   return (
     [
       {
@@ -91,6 +95,23 @@ export const generateSalesColumns = (setActionItem: (item: TSalesPerson | string
           >
             <Key />
             <span>Reset Password</span>
+          </Button>
+        ),
+      },
+      {
+        key: "Reassign",
+        header: "Reassign Customers",
+        render: (row: TSalesPerson) => (
+          <Button
+            onClick={() => {
+              setActionItem(row)
+              setOpenReassignWindow(true)
+            }}
+            variant="ghost"
+            className="flex justify-center items-center gap-2"
+          >
+            <Users className="h-4 w-4" />
+            <span>Reassign</span>
           </Button>
         ),
       }

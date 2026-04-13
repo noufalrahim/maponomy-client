@@ -13,7 +13,8 @@ export const queryBuilder = (
     statuses?: string[];
     dateRange?: DateRange;
     pushedToErpOnly?: boolean;
-  }
+  },
+  warehouseId?: string
 ): QuerySpec => {
   const andConditions: any[] = [];
 
@@ -56,6 +57,14 @@ export const queryBuilder = (
       field: "pushedToErp",
       op: "eq",
       value: true,
+    });
+  }
+
+  if (warehouseId) {
+    andConditions.push({
+      field: "warehouseId",
+      op: "eq",
+      value: warehouseId,
     });
   }
 

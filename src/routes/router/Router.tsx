@@ -15,6 +15,7 @@ import { TargetsManagement } from '@/pages/admin/TargetsManagement';
 import { ImportExport } from '@/pages/admin/ImportExport';
 import { ProtectedRoute } from '../ProtectedRoutes/ProtectedRoutes';
 import { CustomerManagement } from '@/pages/admin/VendorManagement';
+import { StaffManagement, WarehouseManagers } from '@/pages/admin/StaffManagement';
 import { CustomerOrders } from '@/pages/salesperson/customerOrders';
 import { CustomerLayout } from '@/layout/Layout/CustomerLayout';
 import { Orders } from '@/pages/customer/orders';
@@ -48,6 +49,8 @@ export default function Router() {
             }>
                 <Route index element={<AdminDashboard />} />
                 <Route path={EUrl.ADMIN_SALES_PERSON} element={<SalesOpsManagement />} />
+                <Route path={EUrl.ADMIN_STAFF_MANAGEMENT} element={<StaffManagement />} />
+                <Route path={EUrl.ADMIN_WAREHOUSE_MANAGERS} element={<WarehouseManagers />} />
                 <Route path={EUrl.ADMIN_CUSTOMERS} element={<CustomerManagement />} />
                 <Route path={EUrl.ADMIN_WAREHOUSES} element={<WarehouseManagement />} />
                 <Route path={EUrl.ADMIN_PRODUCTS} element={<ProductCatalog />} />
@@ -71,6 +74,7 @@ export default function Router() {
             <Route path={EUrl.SALES_LOGIN} element={<Login type={ERole.SALESPERSON} />} />
             <Route path={EUrl.ADMIN_LOGIN} element={<Login type={ERole.ADMIN} />} />
             <Route path={EUrl.CUSTOMER_LOGIN} element={<Login type={ERole.CUSTOMER} />} />
+            <Route path={EUrl.WAREHOUSE_MANAGER_LOGIN} element={<Login type={ERole.WAREHOUSE_MANAGER} />} />
             <Route path="*" element={<div>Page Not Found</div>} />
         </Routes>
     );

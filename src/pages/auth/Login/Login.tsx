@@ -65,11 +65,19 @@ export default function Login({ type }: LoginProps) {
           <AuthHeader mode={mode} type={type} />
 
           <CardContent>
-            {mode === 'login' && type === ERole.ADMIN && (
+            {mode === 'login' && (type === ERole.ADMIN || type === ERole.WAREHOUSE_MANAGER) && (
               <AdminLoginForm
                 isLoading={signInLoading}
                 onSubmit={handleLogin}
                 onForgot={() => setMode('forgot')}
+              />
+            )}
+
+            {mode === 'forgot' && (type === ERole.ADMIN || type === ERole.WAREHOUSE_MANAGER) && (
+              <AdminForgotForm
+                isLoading={false}
+                onSubmit={handleForgot}
+                onBack={() => setMode('login')}
               />
             )}
 
@@ -80,13 +88,7 @@ export default function Login({ type }: LoginProps) {
               />
             )}
 
-            {mode === 'forgot' && type === ERole.ADMIN && (
-              <AdminForgotForm
-                isLoading={false}
-                onSubmit={handleForgot}
-                onBack={() => setMode('login')}
-              />
-            )}
+
 
             {
               mode === 'login' && type === ERole.CUSTOMER && (

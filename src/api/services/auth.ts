@@ -21,7 +21,7 @@ export const authSignin = async (data: SigninDTO, type: ERole): Promise<TService
   console.log("Data: ", data, type);
   try {
     const response = await apiClient.post<TServiceResponse<TUser>>(
-      type === ERole.ADMIN ? '/auth/admin/signin' : '/auth/signin'
+      (type === ERole.ADMIN || type === ERole.WAREHOUSE_MANAGER) ? '/auth/admin/signin' : '/auth/signin'
       , data, {
       headers: {
         "Content-Type": "application/json",

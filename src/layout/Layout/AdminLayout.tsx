@@ -18,8 +18,10 @@ import {
 import { useAuth } from '@/hooks/useAuth';
 import { EUrl } from '@/types';
 
-const navigation = [
+const allNavigation = [
   { name: 'Dashboard', href: EUrl.ADMIN_DASHBOARD, icon: LayoutDashboard },
+  { name: 'Admin Management', href: EUrl.ADMIN_STAFF_MANAGEMENT, icon: Users },
+  { name: 'Warehouse Managers', href: EUrl.ADMIN_WAREHOUSE_MANAGERS, icon: Users },
   { name: 'Sales Ops', href: EUrl.ADMIN_SALES_PERSON, icon: Users },
   { name: 'Customers', href: EUrl.ADMIN_CUSTOMERS, icon: Store },
   { name: 'Warehouses', href: EUrl.ADMIN_WAREHOUSES, icon: Warehouse },
@@ -39,6 +41,14 @@ export default function AdminLayout({ userEmail }: AdminLayoutProps) {
   const location = useLocation();
 
   const { signOut } = useAuth();
+  
+  const userRole = localStorage.getItem('userRole');
+  const navigation = allNavigation.filter(item => {
+    if (userRole === 'warehouse_manager') {
+       return ['Dashboard', 'Warehouses', 'Orders', 'Import/Export'].includes(item.name);
+    }
+    return true; // Admin sees all
+  });
 
   return (
     <div className="min-h-screen bg-background">

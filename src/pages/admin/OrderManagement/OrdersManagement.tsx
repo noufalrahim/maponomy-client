@@ -19,6 +19,9 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import OrderFilters from './OrderFilter';
 import { DateRange } from 'react-day-picker';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
+import { ERole } from '@/types';
 
 const END_POINT = '/orders';
 
@@ -41,15 +44,22 @@ export default function OrdersManagement() {
 
     const debouncedSearch = useDebounce(searchTerm, 300);
 
+    const user = useSelector((state: RootState) => state.user.entity);
+
     const { data: res, isFetching, isError, error, refetch } =
         useReadDataWithBody<TServiceResponse<TOrder[]>, QuerySpec>(
             "order_list_fetch",
             `${END_POINT}/query`,
-            queryBuilder(pagination, debouncedSearch, {
-                statuses,
-                dateRange,
-                pushedToErpOnly
-            })
+            queryBuilder(
+                pagination, 
+                debouncedSearch, 
+                {
+                    statuses,
+                    dateRange,
+                    pushedToErpOnly
+                },
+                user?.role === ERole.WAREHOUSE_MANAGER ? user?.warehouseId : undefined
+            )
         );
 
     const { mutate: updateOrder, isPending } = useModifyData<TOrder & { id: string }, TServiceResponse<TOrder>>(END_POINT);
@@ -137,21 +147,23 @@ export default function OrdersManagement() {
                     }
                 </div>
                 <div className='flex flex-row items-center justify-center gap-3'>
-                    <Button onClick={() => setOpenWarn(true)} disabled={pushToErpPending || !ordersToPushToErp || ordersToPushToErp.length === 0}>
-                        {
-                            pushToErpPending ? (
-                                <>
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                    Pushing to ERP...
-                                </>
-                            ) : (
-                                <>
-                                    <Upload className="h-4 w-4" />
-                                    Push to ERP
-                                </>
-                            )
-                        }
-                    </Button>
+                    {localStorage.getItem('userRole') !== 'warehouse_manager' && (
+                        <Button onClick={() => setOpenWarn(true)} disabled={pushToErpPending || !ordersToPushToErp || ordersToPushToErp.length === 0}>
+                            {
+                                pushToErpPending ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                        Pushing to ERP...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Upload className="h-4 w-4" />
+                                        Push to ERP
+                                    </>
+                                )
+                            }
+                        </Button>
+                    )}
                 </div>
             </div>
 

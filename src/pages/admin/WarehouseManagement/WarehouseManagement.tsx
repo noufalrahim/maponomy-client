@@ -4,7 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Plus, Search } from 'lucide-react';
 import { TableComponent } from '@/components/Table';
-import { EUrl, TSalesPerson, TServiceResponse, TWarehouse, WarehouseDTO } from '@/types';
+import { ERole, EUrl, TSalesPerson, TServiceResponse, TWarehouse, WarehouseDTO } from '@/types';
 import { DialogModal } from '@/components/DialogModal';
 import { DynamicForm } from '@/components/DynamicForm';
 import { warehouseColumn } from '@/columns/WarehouseColumn';
@@ -21,6 +21,8 @@ import { useNavigate } from 'react-router-dom';
 import { useDebounce } from '@/hooks/useDebounce';
 import { Input } from '@/components/ui/input';
 import { useGeocoding } from '@/hooks/useGeocoding';
+import { useSelector } from 'react-redux';
+import { RootState } from '@/redux/store';
 
 const END_POINT = '/warehouses';
 
@@ -44,13 +46,14 @@ export default function WarehouseManagement() {
 
     const navigate = useNavigate();
 
+    const user = useSelector((state: RootState) => state.user.entity);
     const geocoding = useGeocoding();
 
     const { data: res, isFetching, refetch, isError, error } =
         useReadDataWithBody<TServiceResponse<TWarehouse[]>, QuerySpec>(
             "warehouse_list_fetch",
             `${END_POINT}/query`,
-            queryBuilder(pagination, debouncedSearch)
+            queryBuilder(pagination, debouncedSearch, user?.role === ERole.WAREHOUSE_MANAGER ? user?.warehouseId : undefined)
         );
 
     const { mutate: createWarehouse, isPending: createWarehousePending } = useCreateData<WarehouseDTO, TServiceResponse<TWarehouse>>(END_POINT);
