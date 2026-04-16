@@ -288,10 +288,6 @@ export default function VendorManagement() {
                     schema={schema}
                     onSubmit={(data) => handleSubmit(data)}
                     isEdit={!!actionItem}
-                    formValues={{
-                        latitude: location?.lat?.toString() ?? "",
-                        longitude: location?.long?.toString() ?? "",
-                    }}
                     defaultValues={
                         {
                             name: (actionItem as TCustomer)?.name,
