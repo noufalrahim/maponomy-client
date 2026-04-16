@@ -48,7 +48,7 @@ export default function VendorManagement() {
     const [searchTerm, setSearchTerm] = useState<string>('');
     const [openResetPasswordWindow, setOpenResetPasswordWindow] = useState<boolean>(false);
     const [uploading, setUplaoding] = useState<boolean>(false);
-    const [location, setLocation] = useState<{
+    const [_, setLocation] = useState<{
         lat: number;
         long: number;
     }>();
