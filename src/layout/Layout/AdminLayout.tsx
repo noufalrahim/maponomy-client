@@ -20,7 +20,6 @@ import { EUrl } from '@/types';
 
 const allNavigation = [
   { name: 'Dashboard', href: EUrl.ADMIN_DASHBOARD, icon: LayoutDashboard },
-  { name: 'Admin Management', href: EUrl.ADMIN_STAFF_MANAGEMENT, icon: Users },
   { name: 'Warehouse Managers', href: EUrl.ADMIN_WAREHOUSE_MANAGERS, icon: Users },
   { name: 'Sales Ops', href: EUrl.ADMIN_SALES_PERSON, icon: Users },
   { name: 'Customers', href: EUrl.ADMIN_CUSTOMERS, icon: Store },

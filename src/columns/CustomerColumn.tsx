@@ -92,6 +92,7 @@ export const generateCustomerColumns = (setActionItem: (item: TCustomer | string
             {
                 key: "salespersonId",
                 header: "Assigned To (Sales Rep)",
+                minWidth: 250,
                 tooltip: true,
                 tooltipValue: (row: TCustomer) => row.salespersonId?.[0]?.name || '',
                 render: (row: TCustomer) => (

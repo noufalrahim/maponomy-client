@@ -43,6 +43,7 @@ export const orderColumn: TColumn<TOrder>[] = [
     {
         key: "salesperson",
         header: "Sales Rep",
+        minWidth: 200,
         tooltip: true,
         tooltipValue: (row: TOrder) => row.salesperson?.name || '',
         render: (row: TOrder) => (

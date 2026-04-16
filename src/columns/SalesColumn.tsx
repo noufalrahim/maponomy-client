@@ -24,6 +24,7 @@ export const generateSalesColumns = (
       {
         key: "name",
         header: "Sales Rep",
+        minWidth: 250,
         render: (row: TSalesPerson) => (
           <div className="flex flex-row gap-2 items-center justify-start">
             <span className="flex items-center justify-center w-10 h-10 rounded-full bg-primary text-primary-foreground">
